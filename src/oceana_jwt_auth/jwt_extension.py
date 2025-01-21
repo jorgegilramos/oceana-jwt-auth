@@ -1,0 +1,335 @@
+"""
+JWT Extension
+"""
+from datetime import timedelta
+from typing import Optional, Callable, Any, List, Tuple, Dict, Union
+
+from flask import Blueprint, Flask
+from flask_restx import Api
+# from flask_wtf.csrf import CSRFProtect
+
+from .config import Config, OCEANA_API_PROVIDER
+from .utils import info, debug, EXTENSION_NAME, API_AUTH_DEFAULT_TITLE, \
+    API_AUTH_DEFAULT_VERSION, API_AUTH_DEFAULT_DESCRIPTION
+from .internals import default_user_claims_callback, default_token_header_callback, \
+    default_token_verification_callback, default_encode_key_callback, \
+    default_decode_key_callback
+from .auth import authorizations, security, register_auth_namespace
+from .database.db import db, init_app
+from .database.auth_repository import get_endpoint_security_dict
+from .jwt_handler import encode_jwt, decode_jwt, decode_jwt_unverified
+
+
+__version__ = "0.0.1"
+
+
+class JWTExtension():
+    """
+    JWTExtension
+    """
+
+    def __init__(self,
+                 app: Optional[Flask] = None,
+                 api: Optional[Api] = None,
+                 config_object: Optional[Callable] = None,
+                 *args,
+                 **kwargs):
+        """
+        Create an jwt authorization helper for a application.
+
+        :param Flask app:
+            It can be a Flask app instance, or ``None``.
+
+            1. Use your globally avalaible app object.
+
+            2. But if you are using `Application Factory pattern
+            <https://flask.palletsprojects.com/en/latest/patterns/appfactories/>`,
+            your app is not available globally, so you need to pass ``None`` here,
+            and call :func:`JWTExtension.init_app()` later,
+        :param Api api:
+            Api Flask RestX instance, or ``None``.
+            If app object is passed, it is mandatory to provide Api object as well
+
+        """
+
+        # Store config object
+        self._config = config_object() if config_object is not None else Config()
+
+        # Define callback for verification token function
+        self._token_verification_callback = default_token_verification_callback
+        self._user_claims_callback = default_user_claims_callback
+        self._encode_key_callback = default_encode_key_callback
+        self._decode_key_callback = default_decode_key_callback
+        self._token_header_callback = default_token_header_callback
+
+        if app is not None:
+            self.init_app(app, api, config_object, *args, **kwargs)
+
+    def init_app(self,
+                 app: Optional[Flask] = None,
+                 api: Optional[Api] = None,
+                 config_object: Optional[Callable] = None,
+                 *args,
+                 **kwargs) -> Flask:
+        """
+        Register this extension with the flask app.
+
+        :param app:
+            The Flask Application object
+        :param api:
+            Flask RestX Api instance
+        """
+
+        if app is not None and EXTENSION_NAME in app.extensions:
+            raise RuntimeError(
+                f"A \"{EXTENSION_NAME}\" instance has already been registered on this Flask app."
+                " Import and use that instance instead."
+            )
+
+        if app is None:
+            # Create flask application if it is not provided
+            app = Flask(__name__)
+            if api is None:
+                bp = Blueprint(f"{EXTENSION_NAME}_app", __name__)
+                api = self.create_api(bp, **kwargs)
+                app.register_blueprint(bp)
+        elif api is None:
+            raise Exception("Api parameter can't be empty when app is specified")
+
+        # Store config object
+        if config_object is not None:
+            self._config = config_object()
+
+        # Store Api instance
+        self._api = api
+
+        # Add authorization configuration
+        api.authorizations = authorizations
+        api.security = security
+
+        app = self._create_app(app, api, config_object, *args, **kwargs)
+
+        # Check extension property
+        app.extensions = {} if not hasattr(app, "extensions") else app.extensions
+        app.extensions[EXTENSION_NAME] = self
+        return app
+
+    def create_api(self, bp=None, **kwargs):
+        _title = kwargs.get("title") or API_AUTH_DEFAULT_TITLE
+        _version = kwargs.get("version") or API_AUTH_DEFAULT_VERSION
+        _description = kwargs.get("description") or API_AUTH_DEFAULT_DESCRIPTION
+        api = Api(
+            app=bp,
+            authorizations=authorizations,
+            security=security,
+            title=_title,
+            version=_version,
+            description=_description
+        )
+        return api
+
+    def _create_app(self,
+                    app: Flask,
+                    api: Api,
+                    config_object: Optional[Callable] = None,
+                    *args,
+                    **kwargs):
+        # Default config is Config
+        if not config_object:
+            config_object = Config
+        app.config.from_object(config_object)
+
+        # TODO: Init other extensions
+        # csrf.init_app(app)
+        # oauth.init_app(app)
+        # register_oauth_clients(app)
+
+        # Init database context
+        db.init_app(app)
+
+        with app.app_context():
+            testing = hasattr(app, "testing") and bool(app.testing)
+            debug(f"Testing: {testing}")
+
+            # Create all necessary database entities
+            init_app(config_object, testing)
+
+            # Get endpoint security from database
+            app.config["endpoint_security"] = get_endpoint_security_dict(provider=OCEANA_API_PROVIDER)
+            secured_endpoints = app.config["endpoint_security"]
+            info(f"Secured endpoints: {len(secured_endpoints)}")
+            # Show security endpoints information from database when the application is started
+            for endpoint_id in secured_endpoints:  # pragma: no cover
+                roles = secured_endpoints[endpoint_id].get("roles")
+                info(f"    - {endpoint_id}: {roles}")
+            debug(f"Endpoint security: {secured_endpoints}")
+
+            # Register authorization namespace
+            if self._config.register_auth:
+                bp = Blueprint(f"{EXTENSION_NAME}_api", __name__, url_prefix="/")
+                register_auth_namespace(api=api)
+                app.register_blueprint(bp)
+
+        return app
+
+    def config(self) -> object:
+        """
+        Get extension configuration
+        """
+        return self._config
+
+    def api(self) -> Api:
+        """
+        Get application Api instance (Flask RestX)
+        """
+        return self._api
+
+    # Decorated functions to override default behaviour
+    def set_token_verification_function(self, callback: Callable) -> Callable:
+        """
+        Decorator function. Sets the callback function used for custom
+        verification of a valid JWT.
+
+        Decorated function:
+            Must take six arguments.
+
+        :param str endpoint_id: Argument indicating the endpoint identificator.
+        :param dict jwt_header: Dictionary containing the header data of the JWT.
+        :param dict jwt_data: Dictionary containing the payload data of the JWT.
+        :param bool optional: Boolean ``True`` if JWT is optional in the endpoint
+            ``False`` otherwise.
+        :param list allowed: List of roles allowed for the endpoint.
+        :param list roles: List of roles from the valid JWT
+
+        :return None:
+        """
+
+        self._token_verification_callback = callback
+        return callback
+
+    def set_user_claims_function(self, callback: Callable) -> Callable:
+        """
+        Decorator function. Sets the callback function used to add custom
+        user claims in a JWT.
+        The dictionary of claims returned in the decorated function will be
+        added to claims in JWT that were passed in parameter in ``additional_claims``
+        when creating the access token. Parameter ``additional_claims`` override
+        claims in case of name coincidence.
+
+        Decorated function:
+            Must take only one argument.
+
+        :param str identity:
+            Argument indicating the endpoint identificator.
+
+        :return dict user_claims:
+            Dictionary with custom user claims in a JWT.
+        """
+
+        self._user_claims_callback = callback
+        return callback
+
+    def set_token_header_function(self, callback: Callable) -> Callable:
+        """
+        Decorator function. Sets the callback function used to add custom user
+        properties to the header in a JWT.
+
+        Decorated function:
+            Must take only one argument.
+
+        :param str header: Argument indicating headers to add.
+
+        :return dict header_properties:
+            Dictionary with custom properties to the header in a JWT.
+        """
+
+        self._token_header_callback = callback
+        return callback
+
+    def _encode_jwt_from_config(
+        self,
+        identity: Any,
+        roles: List[str],
+        token_type: str,
+        claims=None,
+        expires_delta: Optional[timedelta] = None,
+        headers=None,
+        version=None,
+        payload: dict = {}
+    ) -> Tuple[str, Dict]:
+        # Override headers
+        add_headers = self._token_header_callback(headers)
+        if headers is not None:
+            add_headers.update(headers)
+
+        # Override claims
+        add_claims = self._user_claims_callback(identity)
+        if claims is not None:
+            add_claims.update(claims)
+
+        if expires_delta is None:
+            if token_type == "access":
+                expires_delta = self._config.access_token_delta
+            # TODO: implement refresh tokens
+            # else:
+            #     expires_delta = self._config.refresh_token_delta
+
+        if version is None and self._config.token_version is not None:
+            version = self._config.token_version
+
+        return encode_jwt(
+            algorithm=self._config.algorithm,
+            audience=self._config.encode_audience,
+            claim_overrides=add_claims,
+            expires_delta=expires_delta,
+            header_overrides=add_headers,
+            identity=identity,
+            identity_claim_key=self._config.identity_claim_key,
+            issuer=self._config.encode_issuer,
+            roles=roles,
+            secret=self._encode_key_callback(identity, self._config.algorithm),
+            token_type=token_type,
+            nbf=True,
+            version=version,
+            payload=payload
+        )
+
+    def _decode_jwt_from_config(
+        self,
+        token: Union[str, None],
+        version=None,
+    ) -> Tuple[Dict, Dict]:
+        """
+        Called from verify_jwt_request
+        """
+
+        algorithms = [self._config.algorithm]
+        key = self._decode_key_callback(identity=None, algorithm=self._config.algorithm)
+
+        if version is None and self._config.token_version is not None:
+            version = self._config.token_version
+
+        return decode_jwt(
+            algorithms=algorithms,
+            audience=self._config.decode_audience,
+            token=token,
+            identity_claim_key=self._config.identity_claim_key,
+            issuer=self._config.decode_issuer,
+            key=key,
+            version=version,
+            verify_aud=self._config.decode_audience is not None,
+            verify_sub=self._config.verify_sub,
+            verify_version=self._config.verify_version)
+
+    def _decode_jwt_unverified_from_config(
+        self,
+        token: str
+    ) -> Tuple[Dict, Dict]:
+        """
+        Tries to retrieve and header and payload information inside of a existent JWT token (string)
+        """
+        algorithms = [self._config.algorithm]
+        return decode_jwt_unverified(
+            algorithms=algorithms,
+            token=token
+        )
