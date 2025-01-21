@@ -1,5 +1,4 @@
 import pytest
-import requests_mock
 from flask import Flask, Blueprint, jsonify
 from flask_restx import Api, Namespace, Resource
 
@@ -103,8 +102,7 @@ def flask_app():
     Only has created the registration endpoint.
     """
 
-    with requests_mock.Mocker():
-        yield _create_flask_app()
+    yield _create_flask_app()
 
 
 def _create_flask_app():
@@ -197,9 +195,8 @@ def test_app():
     It has the application endpoints to test and the registration one.
     """
 
-    with requests_mock.Mocker():
-        app = _create_flask_app()
-        yield _test_app(app)
+    app = _create_flask_app()
+    yield _test_app(app)
 
 
 # Create namespace
@@ -242,5 +239,4 @@ def test_app_classdef():
     It has the application endpoints to test and the registration one.
     """
 
-    with requests_mock.Mocker():
-        yield app
+    yield app

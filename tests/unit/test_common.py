@@ -1,5 +1,4 @@
 import pytest
-import requests_mock
 from flask import Flask
 from flask import json, Response
 from http import HTTPStatus
@@ -76,9 +75,7 @@ def _create_errors_app(app: Flask):
 @pytest.fixture(scope="function")
 def test_errors_app(flask_app: Flask):
 
-    with requests_mock.Mocker():
-        # app = _create_flask_app()
-        yield _create_errors_app(flask_app)
+    yield _create_errors_app(flask_app)
 
 
 # Tests to check
