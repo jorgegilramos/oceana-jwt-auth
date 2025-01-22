@@ -95,7 +95,7 @@ def required_last_minutes(minutes=10):
 @ns_test.route("/minutes", methods=["GET"])
 class TestApp(Resource):
     @handle_exceptions()
-    @required_last_minutes(minutes=2)
+    @required_last_minutes(minutes=2)  # User defined decorator
     def get(self):
         info("Get endpoint reached")
         return jsonify({"status": "OK", "code": 200})
@@ -125,8 +125,8 @@ Properties in environment variables:
 ```shell
 # Database provider and issuer of JWT tokens
 OCEANA_API_PROVIDER=OceanaAPI
-# Security properties
-OCEANA_API_SECURED=false
+# Security properties, it enables global security
+OCEANA_API_SECURED=true
 # Oceana API Secret key
 OCEANA_API_SECRET_KEY=secret_key
 # Generate a JWT with valid within 1 hour by now (in minutes)
@@ -211,6 +211,7 @@ pip uninstall oceana_jwt_auth
 |------------------------|---------|
 | requests-mock          | 1.21.1  |
 | pytest                 | 7.4.0   |
+| pytest-env             | 1.1.5   |
 | coverage               | 6.4.4   |
 | flake8                 | 4.0.1   |
 | tox                    | 4.23.2  |
