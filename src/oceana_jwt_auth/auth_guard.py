@@ -73,7 +73,7 @@ def verify_jwt(optional: bool = False) -> Tuple[dict, dict]:
     Verify that a valid JWT is present in the request, unless ``optional=True`` in
     which case no JWT is also considered valid.
 
-    :param optional:
+    :param bool optional:
         If ``True``, do not raise an error if no JWT is present in the request.
         Defaults to ``False``.
 
@@ -248,9 +248,14 @@ def auth_guard(**kwargs):
     """
     Decorator to protect routes.
 
-    :param bool secured: Secured means if client must be valid authenticated with a valid jwt token
-    :param bool admin: If only role admin is allowed to access endpoint. It overrides endpoint configuration
+    :param bool secured:
+        Secured means if client must be valid authenticated with a valid jwt token
+    :param bool admin:
+        If only role admin is allowed to access endpoint. It overrides endpoint configuration
         from database.
+    :param bool optional:
+        If ``True``, do not raise an error if no JWT is present in the request.
+        Defaults to ``False``.
 
     :raises:
         :class:`~Exception` if the secret doesn't exist, missing access token or

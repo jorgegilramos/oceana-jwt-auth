@@ -41,6 +41,7 @@ class AppLogger:
 
         # Create logger
         self.logger = logging.getLogger(name)
+        self.logger.propagate = False
 
         if not self.logger.handlers:
             level = getattr(logging, OCEANA_API_LOGGING_LEVEL.upper(), logging.INFO)

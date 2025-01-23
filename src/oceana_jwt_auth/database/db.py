@@ -14,7 +14,7 @@ def init_app(config_object, testing):
     sqlite_schema()
 
     # Create all necessary database entities
-    if (hasattr(config_object, "CREATE_DB") and bool(config_object.CREATE_DB)) or testing:
+    if (hasattr(config_object, "DB_CREATE_ENTITIES") and bool(config_object.DB_CREATE_ENTITIES)) or testing:
         db.create_all()
         info("Database Model Initialized")
 

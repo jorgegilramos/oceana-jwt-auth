@@ -12,8 +12,13 @@ OCEANA_API_PROVIDER = _config("OCEANA_API_PROVIDER", default="OceanaAPI", cast=s
 OCEANA_API_SECURED = _config("OCEANA_API_SECURED", default=True, cast=bool)
 # Oceana API secret key
 OCEANA_API_SECRET_KEY = _config("OCEANA_API_SECRET_KEY", default="", cast=str)
-# Generate a JWT with valid within 1 hour by now (in minutes)
+# Generate a token with valid within 1 hour by now (in minutes)
 OCEANA_API_TOKEN_MAX_MINUTES = _config("OCEANA_API_TOKEN_MAX_MINUTES", default=60, cast=int)
+
+
+OCEANA_API_TOKEN_ENCODE_ISSUER = _config("OCEANA_API_TOKEN_ENCODE_ISSUER", default=OCEANA_API_PROVIDER)
+OCEANA_API_TOKEN_DECODE_ISSUER = _config("OCEANA_API_TOKEN_DECODE_ISSUER", default=OCEANA_API_PROVIDER)
+
 
 # RSA algorithm private and public keys
 OCEANA_API_RSA_PRIVATE_KEY = _config("OCEANA_API_RSA_PRIVATE_KEY", default="", cast=str)
@@ -29,7 +34,7 @@ OCEANA_API_LOGGING_INTERVAL = _config("OCEANA_API_LOGGING_INTERVAL", 1)
 OCEANA_API_LOGGING_TITLE = _config("OCEANA_API_LOGGING_TITLE", "oceana-jwt-auth")
 
 
-OCEANA_API_JWT_ALGORITHM = _config("OCEANA_API_JWT_ALGORITHM", "HS256")
+OCEANA_API_TOKEN_ALGORITHM = _config("OCEANA_API_TOKEN_ALGORITHM", "HS256")
 # Refresh token expiration in minutes
 OCEANA_API_TOKEN_REFRESH_MAX_MINUTES = _config("OCEANA_API_TOKEN_REFRESH_MAX_MINUTES", default=60, cast=int)
 
@@ -45,18 +50,22 @@ OCEANA_API_TOKEN_DECODE_AUDIENCE = _config("OCEANA_API_TOKEN_DECODE_AUDIENCE", N
 OCEANA_API_TOKEN_VERSION = "v1"
 
 # Verifications
-OCEANA_API_JWT_VERIFY_SUB = _config("OCEANA_API_JWT_VERIFY_SUB", default=True, cast=bool)
-OCEANA_API_JWT_VERIFY_VERSION = _config("OCEANA_API_JWT_VERIFY_VERSION", default=True, cast=bool)
+OCEANA_API_TOKEN_VERIFY_SUB = _config("OCEANA_API_TOKEN_VERIFY_SUB", default=True, cast=bool)
+OCEANA_API_TOKEN_VERIFY_VERSION = _config("OCEANA_API_TOKEN_VERIFY_VERSION", default=True, cast=bool)
 
 # Register authorization namespace
 OCEANA_API_REGISTER_AUTH = _config("OCEANA_API_REGISTER_AUTH", True, cast=bool)
 
-# JWT Algorithms
+# Token JWT Algorithms
 ALGORITHMS = [a for a in get_default_algorithms().keys() if a != "none"]
 
 
 # Flask application base config
 class BaseConfig:
+
+    @property
+    def api_secured(self) -> bool:
+        return current_app.config.get("OCEANA_API_SECURED") or OCEANA_API_SECURED
 
     @property
     def secret_key(self) -> str:
@@ -81,7 +90,7 @@ class BaseConfig:
 
     @property
     def algorithm(self) -> str:
-        return current_app.config.get("JWT_ALGORITHM") or OCEANA_API_JWT_ALGORITHM
+        return current_app.config.get("TOKEN_ALGORITHM") or OCEANA_API_TOKEN_ALGORITHM
 
     # RSA algorithm
     @property
@@ -113,19 +122,19 @@ class BaseConfig:
 
     @property
     def encode_issuer(self) -> str:
-        return current_app.config.get("JWT_ENCODE_ISSUER") or OCEANA_API_PROVIDER
+        return current_app.config.get("TOKEN_ENCODE_ISSUER") or OCEANA_API_TOKEN_ENCODE_ISSUER
 
     @property
     def decode_issuer(self) -> str:
-        return current_app.config.get("JWT_DECODE_ISSUER") or OCEANA_API_PROVIDER
+        return current_app.config.get("TOKEN_DECODE_ISSUER") or OCEANA_API_TOKEN_DECODE_ISSUER
 
     @property
     def encode_audience(self) -> Union[str, Iterable[str]]:
-        return current_app.config.get("JWT_ENCODE_AUDIENCE") or OCEANA_API_TOKEN_ENCODE_AUDIENCE
+        return current_app.config.get("TOKEN_ENCODE_AUDIENCE") or OCEANA_API_TOKEN_ENCODE_AUDIENCE
 
     @property
     def decode_audience(self) -> Union[str, Iterable[str]]:
-        return current_app.config.get("JWT_DECODE_AUDIENCE") or OCEANA_API_TOKEN_DECODE_AUDIENCE
+        return current_app.config.get("TOKEN_DECODE_AUDIENCE") or OCEANA_API_TOKEN_DECODE_AUDIENCE
 
     @property
     def identity_claim_key(self) -> str:
@@ -134,11 +143,11 @@ class BaseConfig:
     # Verifications
     @property
     def verify_sub(self) -> bool:
-        return current_app.config.get("JWT_VERIFY_SUB") or OCEANA_API_JWT_VERIFY_SUB
+        return current_app.config.get("TOKEN_VERIFY_SUB") or OCEANA_API_TOKEN_VERIFY_SUB
 
     @property
     def verify_version(self) -> bool:
-        return current_app.config.get("JWT_VERIFY_VERSION") or OCEANA_API_JWT_VERIFY_VERSION
+        return current_app.config.get("TOKEN_VERIFY_VERSION") or OCEANA_API_TOKEN_VERIFY_VERSION
 
     @property
     def register_auth(self) -> bool:
@@ -192,7 +201,7 @@ class Config(BaseConfig):
     DB_PASSWORD = _config("DB_PASSWORD", default="postgres")
     DB_PORT = _config("DB_PORT", default="5432", cast=int)
     DB_SCHEMA = _config("DB_SCHEMA", default="public")
-    CREATE_DB = _config("CREATE_DB", default=True, cast=bool)  # TODO: Change to default False
+    DB_CREATE_ENTITIES = _config("DB_CREATE_ENTITIES", default=True, cast=bool)
 
 
 class ConfigSqlAlchemy(Config):
@@ -234,8 +243,8 @@ class ConfigSqlite(ConfigSqlAlchemy):
     DB_PASSWORD = None
     DB_PORT = None
     # Default value to test
-    SCHEMA = "public"
-    CREATE_DB = True
+    DB_SCHEMA = "public"
+    DB_CREATE_ENTITIES = True
 
 
 config = Config()

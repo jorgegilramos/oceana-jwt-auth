@@ -119,6 +119,35 @@ app.register_blueprint(bp)
 jwt = JWTExtension(app=app, api=api, config_object=ConfigSqlite)
 ```
 
+Config authorization witha a Postgres database:
+```python
+# Import Postgres configuration object
+from oceana_jwt_auth import JWTExtension, ConfigPostgres
+
+app[SQLALCHEMY_DATABASE_URI] = "postgresql://postgres:postgres@127.0.0.1:5432/oceana_jwt_auth"
+
+
+JWTExtension(app=app, api=api, config_object=ConfigPostgres)
+
+```
+Connection string can be stored in environment parameters:
+```bash
+# Connection configuration
+SQLALCHEMY_DATABASE_URI="postgresql://postgres:postgres@127.0.0.1:5432/oceana_jwt_auth"
+```
+or:
+```bash
+# Connection configuration
+DB_HOST=127.0.0.1
+DB_NAME=oceana_jwt_auth
+DB_USERNAME=postgres
+DB_PASSWORD=postgres
+DB_PORT=5432
+DB_SCHEMA=public
+DB_CREATE_ENTITIES=true
+```
+
+
 ## Environment
 
 Properties in environment variables:
@@ -215,6 +244,13 @@ pip uninstall oceana_jwt_auth
 | coverage               | 6.4.4   |
 | flake8                 | 4.0.1   |
 | tox                    | 4.23.2  |
+
+
+# Postgres
+| Library                | Version |
+|------------------------|---------|
+| psycopg2               | 2.9.9   |
+
 
 ## Releases
 **Version 0.0.1**:

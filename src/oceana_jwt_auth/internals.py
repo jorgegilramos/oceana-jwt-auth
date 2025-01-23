@@ -3,7 +3,7 @@ from typing import List, Any
 from flask import current_app
 
 from .utils import EXTENSION_NAME
-from .utils.utils import error
+from .utils.utils import error, debug
 from .utils.constants import AuthAPIRoles
 from .config import config
 from .exceptions import ClientAuthenticationError
@@ -65,20 +65,20 @@ def default_token_verification_callback(endpoint_id: str,
     # raise UserClaimsVerificationError(error_msg, jwt_header, jwt_data)
 
     # Authorization gate
-    if not optional:
+    client_id = jwt_data.get(config.identity_claim_key, "unknown") if len(jwt_data) > 0 else "unknown"
+
+    if config.api_secured and not optional:
         assert jwt_header["typ"] == "JWT"
         assert jwt_header["alg"] == config.algorithm
 
         allow = is_authorized(roles=roles, allowed=allowed)
         if not allow:
-            if len(jwt_data) > 0:
-                client_id = jwt_data.get(config.identity_claim_key, "unknown")
-                error(f"Endpoint \"{endpoint_id}\". Authorization not granted for client " +
-                      f"\"{client_id}\", roles: {roles}, allowed: {allowed}")
-            # else:
-            #     error(f"{endpoint_id} authorization token not provided")
+            error(f"Endpoint \"{endpoint_id}\". Authorization not granted for client " +
+                  f"\"{client_id}\", roles: {roles}, allowed: {allowed}")
             error_msg = "Authorization required"
             raise ClientAuthenticationError(error_msg)
+
+    debug(f"Endpoint \"{endpoint_id}\". Authorization for client_id: \"{client_id}\"")
 
 
 def default_user_claims_callback(identity: Any) -> dict:

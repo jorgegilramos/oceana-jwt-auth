@@ -13,7 +13,7 @@ def test_audience(test_app: Flask):
 
     with test_app.test_request_context():
 
-        test_app.config["JWT_ENCODE_AUDIENCE"] = "my-audience"
+        test_app.config["TOKEN_ENCODE_AUDIENCE"] = "my-audience"
         token, payload = create_access_token(
             identity="oceana-reader",
             roles=["reader"],
@@ -28,7 +28,7 @@ def test_audience(test_app: Flask):
         assert jwt_header["alg"] == "HS256" and jwt_header["typ"] == "JWT"
         assert jwt_data["aud"] == "my-audience"
 
-        test_app.config["JWT_DECODE_AUDIENCE"] = "not-my-audience"
+        test_app.config["TOKEN_DECODE_AUDIENCE"] = "not-my-audience"
         with pytest.raises(ClientAuthenticationError) as exc_info:
             jwt_extension._decode_jwt_from_config(token=token)
         assert str(exc_info.value) == "Invalid access token: Audience doesn't match"

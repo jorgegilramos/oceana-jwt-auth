@@ -28,7 +28,7 @@ def test_token_errors(test_app: Flask):
 
     with test_app.test_request_context():
         # Change encryption algorithm to RS256
-        test_app.config["JWT_ALGORITHM"] = "RS256"
+        test_app.config["TOKEN_ALGORITHM"] = "RS256"
         # Validate exception
         with pytest.raises(RuntimeError) as exc_info:
             _token_rs256, _payload_rs256 = create_access_token(
@@ -93,7 +93,7 @@ def test_crypto_rsa(test_app: Flask):
         )
 
         # Change encryption algorithm to RS256
-        test_app.config["JWT_ALGORITHM"] = "RS256"
+        test_app.config["TOKEN_ALGORITHM"] = "RS256"
         test_app.config["RSA_PUBLIC_KEY"] = RSA_PUBLIC_KEY
         test_app.config["RSA_PRIVATE_KEY"] = RSA_PRIVATE_KEY
         token_rs256, _payload_rs256 = create_access_token(
