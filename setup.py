@@ -5,7 +5,7 @@ import pathlib
 HERE = pathlib.Path(__file__).parent
 
 PACKAGE_NAME = "oceana_jwt_auth"
-VERSION = "0.0.1"
+VERSION = "0.0.3"
 AUTHOR = "jorgegilramos"
 DESCRIPTION = "Oceana API library to manage JWT token in Flask Restx applications"
 LONG_DESCRIPTION = (HERE / "README.md").read_text(encoding="utf-8")

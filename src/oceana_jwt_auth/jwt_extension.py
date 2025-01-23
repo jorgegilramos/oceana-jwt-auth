@@ -20,9 +20,6 @@ from .database.auth_repository import get_endpoint_security_dict
 from .jwt_handler import encode_jwt, decode_jwt, decode_jwt_unverified
 
 
-__version__ = "0.0.1"
-
-
 class JWTExtension():
     """
     JWTExtension

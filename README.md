@@ -189,12 +189,12 @@ coverage html
 
 ```shell
 # Reinstall avoiding reinstalling dependencies
-pip install --upgrade --no-deps --force-reinstall dist\oceana_jwt_auth-0.0.1-py3-none-any.whl
+pip install --upgrade --no-deps --force-reinstall dist\oceana_jwt_auth-0.0.3-py3-none-any.whl
 ```
 
 ```shell
 # Reinstall with dependencies
-pip install dist\oceana_jwt_auth-0.0.1-py3-none-any.whl --force-reinstall
+pip install dist\oceana_jwt_auth-0.0.3-py3-none-any.whl --force-reinstall
 ```
 
 Check style guide enforcement
@@ -253,5 +253,5 @@ pip uninstall oceana_jwt_auth
 
 
 ## Releases
-**Version 0.0.1**:
+**Version 0.0.3**:
    - First version
