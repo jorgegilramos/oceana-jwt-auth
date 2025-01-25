@@ -3,6 +3,7 @@ from oceana_jwt_auth.utils import info, debug
 from oceana_jwt_auth.config import OCEANA_API_PROVIDER
 from oceana_jwt_auth.database.db import db, SecIdentity, SecEndpoint
 from oceana_jwt_auth.database.auth_repository import get_endpoint_security_dict
+from oceana_jwt_auth.utils.constants import ENDPOINT_SECURITY_LABEL
 
 
 def populate_identity_data():
@@ -45,7 +46,7 @@ def populate_endpoint_security_data():
         SecEndpoint(
             provider=OCEANA_API_PROVIDER,
             endpoint="TestApp.get",
-            roles="admin",
+            roles="reader",
             url_template="/v1/test",
             description="Test Endpoint"),
         SecEndpoint(
@@ -59,7 +60,13 @@ def populate_endpoint_security_data():
             endpoint="TestWriter.get",
             roles="writer",
             url_template="/v1/writer",
-            description="Test Writer Endpoint")
+            description="Test Writer Endpoint"),
+        SecEndpoint(
+            provider=OCEANA_API_PROVIDER,
+            endpoint="TestAppAdminOverride.get",
+            roles="admin",
+            url_template="/v1/override_admin",
+            description="Test Endpoint")
     ]
 
     for endpoint in endpoints:
@@ -69,7 +76,7 @@ def populate_endpoint_security_data():
 
 def populate_auth_data(app: Flask):
     # Populate to test in case no persistent database is used
-    if len(app.config["endpoint_security"]) == 0:
+    if len(app.config[ENDPOINT_SECURITY_LABEL]) == 0:
         with app.app_context():
 
             # Populate endpoint security and identities into the database
@@ -77,8 +84,8 @@ def populate_auth_data(app: Flask):
             populate_identity_data()
 
             # Get endpoint security from database
-            app.config["endpoint_security"] = get_endpoint_security_dict(provider=OCEANA_API_PROVIDER)
-            secured_endpoints = app.config["endpoint_security"]
+            app.config[ENDPOINT_SECURITY_LABEL] = get_endpoint_security_dict(provider=OCEANA_API_PROVIDER)
+            secured_endpoints = app.config[ENDPOINT_SECURITY_LABEL]
             info(f"Secured endpoints: {len(secured_endpoints)}")
             for endpoint_id in secured_endpoints:
                 roles = secured_endpoints[endpoint_id].get("roles")

@@ -15,10 +15,9 @@ OCEANA_API_SECRET_KEY = _config("OCEANA_API_SECRET_KEY", default="", cast=str)
 # Generate a token with valid within 1 hour by now (in minutes)
 OCEANA_API_TOKEN_MAX_MINUTES = _config("OCEANA_API_TOKEN_MAX_MINUTES", default=60, cast=int)
 
-
+# Encode and decode issuer in JWT tokens
 OCEANA_API_TOKEN_ENCODE_ISSUER = _config("OCEANA_API_TOKEN_ENCODE_ISSUER", default=OCEANA_API_PROVIDER)
 OCEANA_API_TOKEN_DECODE_ISSUER = _config("OCEANA_API_TOKEN_DECODE_ISSUER", default=OCEANA_API_PROVIDER)
-
 
 # RSA algorithm private and public keys
 OCEANA_API_RSA_PRIVATE_KEY = _config("OCEANA_API_RSA_PRIVATE_KEY", default="", cast=str)
@@ -65,7 +64,7 @@ class BaseConfig:
 
     @property
     def api_secured(self) -> bool:
-        return current_app.config.get("OCEANA_API_SECURED") or OCEANA_API_SECURED
+        return self._get_bool("SECURED", OCEANA_API_SECURED)
 
     @property
     def secret_key(self) -> str:
@@ -143,19 +142,25 @@ class BaseConfig:
     # Verifications
     @property
     def verify_sub(self) -> bool:
-        return current_app.config.get("TOKEN_VERIFY_SUB") or OCEANA_API_TOKEN_VERIFY_SUB
+        return self._get_bool("TOKEN_VERIFY_SUB", OCEANA_API_TOKEN_VERIFY_SUB)
 
     @property
     def verify_version(self) -> bool:
-        return current_app.config.get("TOKEN_VERIFY_VERSION") or OCEANA_API_TOKEN_VERIFY_VERSION
+        return self._get_bool("TOKEN_VERIFY_VERSION", OCEANA_API_TOKEN_VERIFY_VERSION)
 
     @property
     def register_auth(self) -> bool:
-        return current_app.config.get("REGISTER_AUTH") or OCEANA_API_REGISTER_AUTH
+        return self._get_bool("REGISTER_AUTH", OCEANA_API_REGISTER_AUTH)
 
     @property
     def token_version(self):
         return OCEANA_API_TOKEN_VERSION
+
+    def _get_bool(self, key: str, env_val) -> bool:
+        if key in current_app.config:
+            return bool(current_app.config.get(key))
+        else:
+            return bool(env_val)
 
     SWAGGER_UI_DOC_EXPANSION = "list"  # ("none", "list" or "full")
 
@@ -247,4 +252,6 @@ class ConfigSqlite(ConfigSqlAlchemy):
     DB_CREATE_ENTITIES = True
 
 
+# Syntax sugar: Shared instance of Config class just to get the
+# properties (@property label) from the Flask current_app.
 config = Config()

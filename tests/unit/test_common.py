@@ -12,8 +12,6 @@ from oceana_jwt_auth.exceptions import HttpResponseError, ClientAuthenticationEr
 
 def _create_errors_app(app: Flask):
 
-    app.config["REGISTER_AUTH"] = False
-
     @app.route("/response_error", methods=["GET"])
     @handle_exceptions()
     def response_error():

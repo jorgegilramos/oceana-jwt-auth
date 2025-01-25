@@ -1,9 +1,5 @@
 from sqlalchemy import Column, PrimaryKeyConstraint, inspect
 
-# from sqlalchemy.types import BigInteger, String, DateTime, LargeBinary
-# from sqlalchemy.dialects.postgresql import JSONB, BOOLEAN, UUID
-# from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
-
 from ...database.db import db
 from ...config import Config  # noqa: F401
 

@@ -34,6 +34,8 @@ def test_app_blueprint_registration():
 
     # Flask app instance
     app = Flask(__name__)
+    app.config["SECURED"] = True
+    app.config["REGISTER_AUTH"] = True
 
     # Register blueprint
     app.register_blueprint(bp)
@@ -137,6 +139,7 @@ def test_initialize_auth_rules():
 
     # Flask app instance
     app = Flask(__name__)
+    app.config["SECURED"] = True
     app.config["REGISTER_AUTH"] = True
     jwt = JWTExtension(app=app, api=api, config_object=ConfigSqlite)
     # Register blueprint

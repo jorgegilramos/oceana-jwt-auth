@@ -14,7 +14,7 @@ ns_test = Namespace("Test", description="Test API", path="/v1")
 
 
 @ns_test.route("/override_admin", methods=["GET"])
-class TestApp(Resource):
+class TestAppAdminOverride(Resource):
     # Only admin role can access to the endpoint, this behaviour
     # will be changed in custom verification function
     @auth_guard(secured=True)

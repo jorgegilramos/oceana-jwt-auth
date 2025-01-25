@@ -9,6 +9,8 @@ from oceana_jwt_auth import JWTExtension, ConfigSqlite, auth_guard, info, \
 
 # App is available globally
 app = Flask(__name__)
+# Audience is now mandatory, only allow tokens created with our /login endpoint
+app.config["TOKEN_DECODE_AUDIENCE"] = "audience_example"
 
 # Create namespace
 ns_test = Namespace("Test", description="Test API", path="/v1")

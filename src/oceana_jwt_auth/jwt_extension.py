@@ -9,8 +9,8 @@ from flask_restx import Api
 # from flask_wtf.csrf import CSRFProtect
 
 from .config import Config, OCEANA_API_PROVIDER
-from .utils import info, debug, EXTENSION_NAME, API_AUTH_DEFAULT_TITLE, \
-    API_AUTH_DEFAULT_VERSION, API_AUTH_DEFAULT_DESCRIPTION
+from .utils import info, debug, EXTENSION_NAME, ENDPOINT_SECURITY_LABEL, \
+    API_AUTH_DEFAULT_TITLE, API_AUTH_DEFAULT_VERSION, API_AUTH_DEFAULT_DESCRIPTION
 from .internals import default_user_claims_callback, default_token_header_callback, \
     default_token_verification_callback, default_encode_key_callback, \
     default_decode_key_callback
@@ -134,7 +134,8 @@ class JWTExtension():
         # Default config is Config
         if not config_object:
             config_object = Config
-        app.config.from_object(config_object)
+            self._config = Config()
+        app.config.from_object(config_object())
 
         # TODO: Init other extensions
         # csrf.init_app(app)
@@ -148,12 +149,15 @@ class JWTExtension():
             testing = hasattr(app, "testing") and bool(app.testing)
             debug(f"Testing: {testing}")
 
+            # Show information about global security
+            info(f"API secured: {self._config.api_secured}")
+
             # Create all necessary database entities
             init_app(config_object, testing)
 
             # Get endpoint security from database
-            app.config["endpoint_security"] = get_endpoint_security_dict(provider=OCEANA_API_PROVIDER)
-            secured_endpoints = app.config["endpoint_security"]
+            app.config[ENDPOINT_SECURITY_LABEL] = get_endpoint_security_dict(provider=OCEANA_API_PROVIDER)
+            secured_endpoints = app.config[ENDPOINT_SECURITY_LABEL]
             info(f"Secured endpoints: {len(secured_endpoints)}")
             # Show security endpoints information from database when the application is started
             for endpoint_id in secured_endpoints:  # pragma: no cover
@@ -166,12 +170,13 @@ class JWTExtension():
                 bp = Blueprint(f"{EXTENSION_NAME}_api", __name__, url_prefix="/")
                 register_auth_namespace(api=api)
                 app.register_blueprint(bp)
+            info(f"Registered authorization endpoints: {self._config.register_auth}")
 
         return app
 
-    def config(self) -> object:
+    def config(self) -> Config:
         """
-        Get extension configuration
+        Get extension configuration instance
         """
         return self._config
 
@@ -264,27 +269,28 @@ class JWTExtension():
         if claims is not None:
             add_claims.update(claims)
 
+        config = self._config  # self.config()
         if expires_delta is None:
             if token_type == "access":
-                expires_delta = self._config.access_token_delta
+                expires_delta = config.access_token_delta
             # TODO: implement refresh tokens
             # else:
-            #     expires_delta = self._config.refresh_token_delta
+            #     expires_delta = config.refresh_token_delta
 
-        if version is None and self._config.token_version is not None:
-            version = self._config.token_version
+        if version is None and config.token_version is not None:
+            version = config.token_version
 
         return encode_jwt(
-            algorithm=self._config.algorithm,
-            audience=self._config.encode_audience,
+            algorithm=config.algorithm,
+            audience=config.encode_audience,
             claim_overrides=add_claims,
             expires_delta=expires_delta,
             header_overrides=add_headers,
             identity=identity,
-            identity_claim_key=self._config.identity_claim_key,
-            issuer=self._config.encode_issuer,
+            identity_claim_key=config.identity_claim_key,
+            issuer=config.encode_issuer,
             roles=roles,
-            secret=self._encode_key_callback(identity, self._config.algorithm),
+            secret=self._encode_key_callback(identity, config.algorithm),
             token_type=token_type,
             nbf=True,
             version=version,
@@ -300,23 +306,24 @@ class JWTExtension():
         Called from verify_jwt_request
         """
 
-        algorithms = [self._config.algorithm]
-        key = self._decode_key_callback(identity=None, algorithm=self._config.algorithm)
+        config = self._config  # self.config()
+        algorithms = [config.algorithm]
+        key = self._decode_key_callback(identity=None, algorithm=config.algorithm)
 
-        if version is None and self._config.token_version is not None:
-            version = self._config.token_version
+        if version is None and config.token_version is not None:
+            version = config.token_version
 
         return decode_jwt(
             algorithms=algorithms,
-            audience=self._config.decode_audience,
+            audience=config.decode_audience,
             token=token,
-            identity_claim_key=self._config.identity_claim_key,
-            issuer=self._config.decode_issuer,
+            identity_claim_key=config.identity_claim_key,
+            issuer=config.decode_issuer,
             key=key,
             version=version,
-            verify_aud=self._config.decode_audience is not None,
-            verify_sub=self._config.verify_sub,
-            verify_version=self._config.verify_version)
+            verify_aud=config.decode_audience is not None,
+            verify_sub=config.verify_sub,
+            verify_version=config.verify_version)
 
     def _decode_jwt_unverified_from_config(
         self,

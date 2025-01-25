@@ -13,6 +13,8 @@ Flask-SQLAlchemy==3.1.1
 # SQLAlchemy==1.4.47
 # Flask-SQLAlchemy==3.0.3
 cryptography>=41.0.7
+# Postgres
+# psycopg2==2.9.9
 
 
 # Tests requirements

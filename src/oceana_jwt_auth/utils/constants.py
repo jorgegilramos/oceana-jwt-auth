@@ -3,6 +3,8 @@ from enum import Enum
 # Flask extension name
 EXTENSION_NAME = "oceana-jwt-auth"
 
+ENDPOINT_SECURITY_LABEL = "ENDPOINT_SECURITY"
+
 # Authorization api version (in URL)
 API_AUTH_DESCRIPTION = "Authentication API"
 

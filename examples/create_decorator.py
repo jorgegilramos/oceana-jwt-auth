@@ -23,7 +23,7 @@ def required_last_minutes(minutes=10):
         def decorated_function(*args, **kwargs):
             # Verify jwt
             jwt_data, jwt_header = verify_jwt(optional=False)
-            # Get roles from jwt
+
             iat = jwt_data.get("iat")
             iat_dt = datetime.fromtimestamp(iat)
             created = jwt_data.get("created")

@@ -1,2 +1,2 @@
 # Important, do not remove
-from .db import *  # db, SecEndpoint, SecIdentity  # noqa
+from .db import *  # noqa

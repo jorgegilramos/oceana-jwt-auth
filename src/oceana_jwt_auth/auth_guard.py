@@ -9,7 +9,7 @@ from http import HTTPStatus
 from flask import request, g, current_app, Response
 
 from .utils.utils import error, debug, warning
-from .utils.constants import AuthAPIRoles
+from .utils.constants import AuthAPIRoles, ENDPOINT_SECURITY_LABEL
 
 from .internals import get_jwt_extension
 from .api.common import response_api_error
@@ -84,8 +84,8 @@ def verify_jwt(optional: bool = False) -> Tuple[dict, dict]:
         is in the request.
 """
 
-    jwt_data = g._jwt_oceana_jwt_data
-    jwt_header = g._jwt_oceana_jwt_header
+    jwt_data = g._jwt_oceana_jwt_data if hasattr(g, "_jwt_oceana_jwt_data") else {}
+    jwt_header = g._jwt_oceana_jwt_header if hasattr(g, "_jwt_oceana_jwt_header") else {}
 
     raised_exception = None
     try:
@@ -131,6 +131,8 @@ def decode_unverified_jwt_request() -> None:
     g._jwt_oceana_jwt_data = jwt_data
     g._jwt_oceana_jwt_header = unverified_header
 
+    return jwt_data, unverified_header
+
 
 def handle_secured_route(endpoint_id, admin, optional, allowed: List[str]) -> bool:
     """
@@ -169,14 +171,25 @@ def handle_route_exceptions(route_function, secured, admin, optional, *args, **k
     Throw exceptions
     """
     # Application configuration contains endpoint security
-    endpoint_security = current_app.config["endpoint_security"]
+    endpoint_security = current_app.config[ENDPOINT_SECURITY_LABEL]
 
     # Get endpoint qualified name
     endpoint_id = route_function.__qualname__
 
     # Decode JWT token if it is present, and stores jwt and header in
     # user's request variables so can be used afterwards
-    decode_unverified_jwt_request()
+    jwt_data_unverified, _ = decode_unverified_jwt_request()
+
+    # jwt_extension = get_jwt_extension()
+    # aaa = jwt_extension._config().api_secured
+
+    # Api security disabled globally (not recommended)
+    if not config.api_secured:
+        if jwt_data_unverified is not None:
+            client_id = jwt_data_unverified.get(config.identity_claim_key, "unknown") \
+                if len(jwt_data_unverified) > 0 else "unknown"
+            debug(f"Endpoint \"{endpoint_id}\". Authorization for client_id: \"{client_id}\"")
+        return current_app.ensure_sync(route_function)(*args, **kwargs)
 
     # if endpoint not configured then consider it open as default option
     if endpoint_id not in endpoint_security.keys():

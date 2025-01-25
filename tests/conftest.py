@@ -5,6 +5,7 @@ from flask_restx import Api, Namespace, Resource
 from oceana_jwt_auth import JWTExtension, ConfigSqlite, authorizations, security, \
     OCEANA_API_PROVIDER, get_endpoint_security_dict, info, auth_guard
 from oceana_jwt_auth.database.db import db, SecEndpoint, SecIdentity
+from oceana_jwt_auth.utils.constants import ENDPOINT_SECURITY_LABEL
 
 
 def _populate_endpoint_security_data(session):
@@ -46,7 +47,7 @@ def _populate_endpoint_security_data(session):
             roles="admin",
             url_template="/v1/admin",
             description="Test Endpoint"),
-        # For test_application.py
+        # To test routing with class in test_application.py
         SecEndpoint(
             provider=OCEANA_API_PROVIDER,
             endpoint="TestApp.get",
@@ -119,6 +120,7 @@ def _create_flask_app():
     )
     app.register_blueprint(bp)
 
+    app.config["SECURED"] = True
     app.config["REGISTER_AUTH"] = True
 
     JWTExtension(app, api, config_object=ConfigSqlite)
@@ -129,8 +131,8 @@ def _create_flask_app():
 
         # Get endpoint security from database
         endpoint_security = get_endpoint_security_dict(provider=OCEANA_API_PROVIDER)
-        app.config["endpoint_security"] = endpoint_security
-        info(f"app.config[\"endpoint_security\"]: {endpoint_security}")
+        app.config[ENDPOINT_SECURITY_LABEL] = endpoint_security
+        info(f"app.config[\"{ENDPOINT_SECURITY_LABEL}\"]: {endpoint_security}")
         assert len(endpoint_security) > 0, "Endpoint security is not populated"
 
     app.testing = True
@@ -212,8 +214,8 @@ with app.app_context():
 
     # Get endpoint security from database
     endpoint_security = get_endpoint_security_dict(provider=OCEANA_API_PROVIDER)
-    app.config["endpoint_security"] = endpoint_security
-    info(f"app.config[\"endpoint_security\"]: {endpoint_security}")
+    app.config[ENDPOINT_SECURITY_LABEL] = endpoint_security
+    info(f"app.config[\"{ENDPOINT_SECURITY_LABEL}\"]: {endpoint_security}")
     assert len(endpoint_security) > 0, "Endpoint security is not populated"
 
 app.testing = True
@@ -240,3 +242,47 @@ def test_app_classdef():
     """
 
     yield app
+
+
+def _create_flask_app_not_secured():
+
+    app = Flask(__name__)
+    bp = Blueprint("api", __name__)
+    api = Api(
+        bp,
+        authorizations=authorizations,
+        security=security,
+        title="Oceana Test API",
+        version="1.0",
+        description="Oceana Test API",
+    )
+    app.register_blueprint(bp)
+
+    app.config["SECURED"] = False
+    app.config["REGISTER_AUTH"] = False
+
+    JWTExtension(app, api, config_object=ConfigSqlite)
+
+    with app.app_context():
+        _populate_endpoint_security_data(db.session)
+        _populate_identity_data(db.session)
+
+        # Get endpoint security from database
+        endpoint_security = get_endpoint_security_dict(provider=OCEANA_API_PROVIDER)
+        app.config[ENDPOINT_SECURITY_LABEL] = endpoint_security
+        info(f"app.config[\"{ENDPOINT_SECURITY_LABEL}\"]: {endpoint_security}")
+        assert len(endpoint_security) > 0, "Endpoint security is not populated"
+
+    app.testing = True
+    return app
+
+
+@pytest.fixture(scope="function")
+def test_app_not_secured():
+    """
+    Fixture of Flask application with SQLite database configuration.
+    It has the application endpoints to test and the registration one.
+    """
+
+    app = _create_flask_app_not_secured()
+    yield _test_app(app)
