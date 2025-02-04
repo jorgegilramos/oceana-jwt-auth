@@ -1,6 +1,10 @@
 # oceana_jwt_auth
-Oceana API library to add authorization in Flask Restx applications using JWT tokens.
 
+![Build Status](https://github.com/jorgegilramos/oceana-jwt-auth/workflows/Python%20package/badge.svg)
+[![PyPI version](https://badge.fury.io/py/oceana-jwt-auth.svg)](https://badge.fury.io/py/oceana-jwt-auth)
+![PyPI - Downloads](https://img.shields.io/pypi/dm/oceana-jwt-auth)
+
+Oceana API library to add authorization in Flask Restx applications using JWT tokens.
 
 ## Setup
 
@@ -190,12 +194,12 @@ coverage html
 
 ```shell
 # Reinstall avoiding reinstalling dependencies
-pip install --upgrade --no-deps --force-reinstall dist\oceana_jwt_auth-0.0.4-py3-none-any.whl
+pip install --upgrade --no-deps --force-reinstall dist\oceana_jwt_auth-0.0.5-py3-none-any.whl
 ```
 
 ```shell
 # Reinstall with dependencies
-pip install dist\oceana_jwt_auth-0.0.4-py3-none-any.whl --force-reinstall
+pip install dist\oceana_jwt_auth-0.0.5-py3-none-any.whl --force-reinstall
 ```
 
 Check style guide enforcement
@@ -254,5 +258,5 @@ pip uninstall oceana_jwt_auth
 
 
 ## Releases
-**Version 0.0.4**:
+**Version 0.0.5**:
    - First version

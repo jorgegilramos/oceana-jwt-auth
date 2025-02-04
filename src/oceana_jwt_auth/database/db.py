@@ -1,6 +1,6 @@
 from flask_sqlalchemy import SQLAlchemy
 from ..config import Config
-from ..utils import info
+from ..utils import info, EXTENSION_BIND
 
 db = SQLAlchemy()
 
@@ -8,22 +8,23 @@ db = SQLAlchemy()
 from ..models.db import SecEndpoint, SecIdentity  # noqa: E402,F401
 
 
-def init_app(config_object, testing):
+def init_app(config_object, testing: bool, declarative_base: SQLAlchemy):
 
     # Simulate schema in sqlite
-    sqlite_schema()
+    sqlite_schema(declarative_base)
 
     # Create all necessary database entities
     if (hasattr(config_object, "DB_CREATE_ENTITIES") and bool(config_object.DB_CREATE_ENTITIES)) or testing:
-        db.create_all()
+        declarative_base.create_all(bind_key=EXTENSION_BIND)
         info("Database Model Initialized")
 
 
-def sqlite_schema():
+def sqlite_schema(declarative_base: SQLAlchemy):
 
     # Simulate schema in sqlite
-    if db.engine.url.get_backend_name() == "sqlite":
-        connection = db.engine.raw_connection()
+    engine = declarative_base.engines[EXTENSION_BIND]
+    if engine.url.get_backend_name() == "sqlite":
+        connection = engine.raw_connection()
         try:
             # Get a SQLite cursor from the connection
             cursor = connection.cursor()

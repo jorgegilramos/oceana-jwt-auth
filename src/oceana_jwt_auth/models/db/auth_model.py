@@ -2,6 +2,7 @@ from sqlalchemy import Column, PrimaryKeyConstraint, inspect
 
 from ...database.db import db
 from ...config import Config  # noqa: F401
+from ...utils import EXTENSION_BIND
 
 # CREATE TABLE frn.sec_identity (
 # 	provider varchar(200) NOT NULL,
@@ -27,6 +28,7 @@ class SecIdentity(db.Model):
         roles (str): Roles given to the provider
         enabled (bool): Client enabled
     """
+    __bind_key__ = EXTENSION_BIND
     __tablename__ = "sec_identity"
     __table_args__ = (
         PrimaryKeyConstraint("provider", "client_type", "client_id"),
@@ -73,6 +75,7 @@ class SecIdentity(db.Model):
 # );
 
 class SecEndpoint(db.Model):
+    __bind_key__ = EXTENSION_BIND
     __tablename__ = "sec_endpoint"
     __table_args__ = (
         PrimaryKeyConstraint("provider", "endpoint"),

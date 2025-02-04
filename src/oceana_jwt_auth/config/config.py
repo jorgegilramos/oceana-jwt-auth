@@ -200,11 +200,19 @@ class BaseConfig:
 
 # Database Configuration POSTGRESQL
 class Config(BaseConfig):
-    DB_HOST = _config("DB_HOST", default="127.0.0.1")
-    DB_NAME = _config("DB_NAME", default="oceana_jwt_auth")
-    DB_USERNAME = _config("DB_USERNAME", default="postgres")
-    DB_PASSWORD = _config("DB_PASSWORD", default="postgres")
-    DB_PORT = _config("DB_PORT", default="5432", cast=int)
+    # DB_HOST = _config("DB_HOST", default="127.0.0.1")
+    # DB_NAME = _config("DB_NAME", default="oceana_jwt_auth")
+    # DB_USERNAME = _config("DB_USERNAME", default="postgres")
+    # DB_PASSWORD = _config("DB_PASSWORD", default="postgres")
+    # DB_PORT = _config("DB_PORT", default="5432", cast=int)
+    # DB_SCHEMA = _config("DB_SCHEMA", default="public")
+    # DB_CREATE_ENTITIES = _config("DB_CREATE_ENTITIES", default=True, cast=bool)
+
+    DB_HOST = _config("DB_HOST", default=None)
+    DB_NAME = _config("DB_NAME", default=None)
+    DB_USERNAME = _config("DB_USERNAME", default=None)
+    DB_PASSWORD = _config("DB_PASSWORD", default=None)
+    DB_PORT = _config("DB_PORT", default=5432, cast=int)
     DB_SCHEMA = _config("DB_SCHEMA", default="public")
     DB_CREATE_ENTITIES = _config("DB_CREATE_ENTITIES", default=True, cast=bool)
 

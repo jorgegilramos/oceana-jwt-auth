@@ -3,6 +3,9 @@ from enum import Enum
 # Flask extension name
 EXTENSION_NAME = "oceana-jwt-auth"
 
+# Bind for SQLAlchemy
+EXTENSION_BIND = "oceana_jwt_auth"
+
 ENDPOINT_SECURITY_LABEL = "ENDPOINT_SECURITY"
 
 # Authorization api version (in URL)

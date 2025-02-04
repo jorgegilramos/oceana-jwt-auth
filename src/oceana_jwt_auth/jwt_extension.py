@@ -5,11 +5,12 @@ from datetime import timedelta
 from typing import Optional, Callable, Any, List, Tuple, Dict, Union
 
 from flask import Blueprint, Flask
+from flask_sqlalchemy import SQLAlchemy
 from flask_restx import Api
 # from flask_wtf.csrf import CSRFProtect
 
 from .config import Config, OCEANA_API_PROVIDER
-from .utils import info, debug, EXTENSION_NAME, ENDPOINT_SECURITY_LABEL, \
+from .utils import info, debug, EXTENSION_NAME, EXTENSION_BIND, ENDPOINT_SECURITY_LABEL, \
     API_AUTH_DEFAULT_TITLE, API_AUTH_DEFAULT_VERSION, API_AUTH_DEFAULT_DESCRIPTION
 from .internals import default_user_claims_callback, default_token_header_callback, \
     default_token_verification_callback, default_encode_key_callback, \
@@ -29,6 +30,7 @@ class JWTExtension():
                  app: Optional[Flask] = None,
                  api: Optional[Api] = None,
                  config_object: Optional[Callable] = None,
+                 declarative_base: SQLAlchemy = None,
                  *args,
                  **kwargs):
         """
@@ -60,12 +62,13 @@ class JWTExtension():
         self._token_header_callback = default_token_header_callback
 
         if app is not None:
-            self.init_app(app, api, config_object, *args, **kwargs)
+            self.init_app(app, api, config_object, declarative_base, *args, **kwargs)
 
     def init_app(self,
                  app: Optional[Flask] = None,
                  api: Optional[Api] = None,
                  config_object: Optional[Callable] = None,
+                 declarative_base: SQLAlchemy = None,
                  *args,
                  **kwargs) -> Flask:
         """
@@ -98,13 +101,14 @@ class JWTExtension():
             self._config = config_object()
 
         # Store Api instance
+        self._app = app
         self._api = api
 
         # Add authorization configuration
         api.authorizations = authorizations
         api.security = security
 
-        app = self._create_app(app, api, config_object, *args, **kwargs)
+        app = self._create_app(app, api, config_object, declarative_base, *args, **kwargs)
 
         # Check extension property
         app.extensions = {} if not hasattr(app, "extensions") else app.extensions
@@ -129,13 +133,18 @@ class JWTExtension():
                     app: Flask,
                     api: Api,
                     config_object: Optional[Callable] = None,
+                    declarative_base: SQLAlchemy = None,
                     *args,
                     **kwargs):
         # Default config is Config
         if not config_object:
             config_object = Config
             self._config = Config()
-        app.config.from_object(config_object())
+
+        # Get properties from object. SQLAlchemy properties are taken from
+        # the Flask application overriding those ones coming from the object.
+        # app.config.from_object(config_object())
+        self._app_config_from_object(app, config_object)
 
         # TODO: Init other extensions
         # csrf.init_app(app)
@@ -143,7 +152,14 @@ class JWTExtension():
         # register_oauth_clients(app)
 
         # Init database context
-        db.init_app(app)
+        if declarative_base is None:
+            declarative_base = db
+
+        # Initialize SQLAlchemy application
+        if "sqlalchemy" not in app.extensions:
+            declarative_base.init_app(app)
+
+        # self._declarative_base = declarative_base
 
         with app.app_context():
             testing = hasattr(app, "testing") and bool(app.testing)
@@ -153,19 +169,12 @@ class JWTExtension():
             info(f"API secured: {self._config.api_secured}")
 
             # Create all necessary database entities
-            init_app(config_object, testing)
+            init_app(config_object, testing, declarative_base)
 
             # Get endpoint security from database
-            app.config[ENDPOINT_SECURITY_LABEL] = get_endpoint_security_dict(provider=OCEANA_API_PROVIDER)
-            secured_endpoints = app.config[ENDPOINT_SECURITY_LABEL]
-            info(f"Secured endpoints: {len(secured_endpoints)}")
-            # Show security endpoints information from database when the application is started
-            for endpoint_id in secured_endpoints:  # pragma: no cover
-                roles = secured_endpoints[endpoint_id].get("roles")
-                info(f"    - {endpoint_id}: {roles}")
-            debug(f"Endpoint security: {secured_endpoints}")
+            self.update_auth_from_db()
 
-            # Register authorization namespace
+            # Register authorization namespace (need context)
             if self._config.register_auth:
                 bp = Blueprint(f"{EXTENSION_NAME}_api", __name__, url_prefix="/")
                 register_auth_namespace(api=api)
@@ -173,6 +182,49 @@ class JWTExtension():
             info(f"Registered authorization endpoints: {self._config.register_auth}")
 
         return app
+
+    def _app_config_from_object(self,
+                                app: Flask,
+                                config_object: Optional[Callable] = None):
+        sqlalchemy_keys = ["SQLALCHEMY_DATABASE_URI",
+                           "SQLALCHEMY_ENGINE_OPTIONS",
+                           "SQLALCHEMY_ECHO",
+                           "SQLALCHEMY_BINDS",
+                           "SQLALCHEMY_RECORD_QUERIES",
+                           "SQLALCHEMY_TRACK_MODIFICATIONS"]
+
+        obj = config_object()
+        for key in dir(obj):
+            if key.isupper():
+                if key not in sqlalchemy_keys:
+                    value = getattr(obj, key)
+                else:
+                    value = getattr(obj, key) if not app.config.get(key) \
+                        else app.config[key]
+                app.config[key] = value
+                setattr(self._config, key, value)
+
+        # Ensure oceana_jwt_auth bind
+        if (_binds := app.config.get("SQLALCHEMY_BINDS")) is None:
+            app.config["SQLALCHEMY_BINDS"] = \
+                {EXTENSION_BIND: app.config["SQLALCHEMY_DATABASE_URI"]}
+        elif EXTENSION_BIND not in _binds:
+            app.config["SQLALCHEMY_BINDS"].update(
+                {EXTENSION_BIND: app.config["SQLALCHEMY_DATABASE_URI"]}
+            )
+
+    def update_auth_from_db(self):
+
+        # Get endpoint security from database
+        secured_endpoints = get_endpoint_security_dict(provider=OCEANA_API_PROVIDER)
+        self._app.config[ENDPOINT_SECURITY_LABEL] = secured_endpoints
+        setattr(self._app.config, ENDPOINT_SECURITY_LABEL, secured_endpoints)
+        info(f"Secured endpoints: {len(secured_endpoints)}")
+        # Show security endpoints information from database when the application is started
+        for endpoint_id in secured_endpoints:  # pragma: no cover
+            roles = secured_endpoints[endpoint_id].get("roles")
+            info(f"    - {endpoint_id}: {roles}")
+        debug(f"Endpoint security: {secured_endpoints}")
 
     def config(self) -> Config:
         """
@@ -306,7 +358,7 @@ class JWTExtension():
         Called from verify_jwt_request
         """
 
-        config = self._config  # self.config()
+        config = self._config
         algorithms = [config.algorithm]
         key = self._decode_key_callback(identity=None, algorithm=config.algorithm)
 
