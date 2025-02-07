@@ -4,9 +4,6 @@ from ..utils import info, EXTENSION_BIND
 
 db = SQLAlchemy()
 
-# Important to use create_all() tables in SQLAlchemy. Do not remove!!!
-from ..models.db import SecEndpoint, SecIdentity  # noqa: E402,F401
-
 
 def init_app(config_object, testing: bool, declarative_base: SQLAlchemy):
 

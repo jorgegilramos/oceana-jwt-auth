@@ -1,8 +1,10 @@
 from flask import Flask
 from oceana_jwt_auth.utils import info, debug
 from oceana_jwt_auth.config import OCEANA_API_PROVIDER
-from oceana_jwt_auth.database.db import db, SecIdentity, SecEndpoint
-from oceana_jwt_auth.database.auth_repository import get_endpoint_security_dict
+from oceana_jwt_auth import db, get_endpoint_security_dict
+from oceana_jwt_auth.models import SecIdentity, SecEndpoint
+
+
 from oceana_jwt_auth.utils.constants import ENDPOINT_SECURITY_LABEL
 
 

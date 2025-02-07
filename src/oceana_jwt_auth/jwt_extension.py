@@ -8,6 +8,7 @@ from flask import Blueprint, Flask
 from flask_sqlalchemy import SQLAlchemy
 from flask_restx import Api
 # from flask_wtf.csrf import CSRFProtect
+from urllib.parse import quote_plus
 
 from .config import Config, OCEANA_API_PROVIDER
 from .utils import info, debug, EXTENSION_NAME, EXTENSION_BIND, ENDPOINT_SECURITY_LABEL, \
@@ -16,8 +17,8 @@ from .internals import default_user_claims_callback, default_token_header_callba
     default_token_verification_callback, default_encode_key_callback, \
     default_decode_key_callback
 from .auth import authorizations, security, register_auth_namespace
-from .database.db import db, init_app
-from .database.auth_repository import get_endpoint_security_dict
+from .database import db, init_app, get_endpoint_security_dict
+
 from .jwt_handler import encode_jwt, decode_jwt, decode_jwt_unverified
 
 
@@ -205,13 +206,40 @@ class JWTExtension():
                 setattr(self._config, key, value)
 
         # Ensure oceana_jwt_auth bind
+        uri = self._escape_uri(
+            uri=app.config["SQLALCHEMY_DATABASE_URI"],
+            passwd=config_object.OCEANA_API_DB_AUTH_PASSWORD)
+
         if (_binds := app.config.get("SQLALCHEMY_BINDS")) is None:
             app.config["SQLALCHEMY_BINDS"] = \
-                {EXTENSION_BIND: app.config["SQLALCHEMY_DATABASE_URI"]}
+                {EXTENSION_BIND: uri}
         elif EXTENSION_BIND not in _binds:
             app.config["SQLALCHEMY_BINDS"].update(
-                {EXTENSION_BIND: app.config["SQLALCHEMY_DATABASE_URI"]}
+                {EXTENSION_BIND: uri}
             )
+        else:
+            uri = self._escape_uri(
+                uri=app.config["SQLALCHEMY_BINDS"][EXTENSION_BIND],
+                passwd=config_object.OCEANA_API_DB_AUTH_PASSWORD)
+            app.config["SQLALCHEMY_BINDS"][EXTENSION_BIND] = uri
+
+    def _escape_uri(self, uri: str, passwd: str) -> str:
+
+        passwd_in_uri = str(uri.split("://")[1].split("@")[0]).find(":") > 0
+        db_auth_uri = uri
+        if not passwd_in_uri:
+            if passwd is not None:
+                uri_split = uri.split("@")
+                if len(uri_split) == 2:
+                    db_auth_uri = "".join([
+                        uri_split[0],
+                        ":",
+                        quote_plus(passwd),  # Escape passwd
+                        "@",
+                        uri_split[1]])
+                else:
+                    raise RuntimeError("Syntax mismatch in database URI")
+        return db_auth_uri
 
     def update_auth_from_db(self):
 

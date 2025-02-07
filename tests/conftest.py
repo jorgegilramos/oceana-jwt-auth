@@ -3,8 +3,9 @@ from flask import Flask, Blueprint, jsonify
 from flask_restx import Api, Namespace, Resource
 
 from oceana_jwt_auth import JWTExtension, ConfigSqlite, authorizations, security, \
-    OCEANA_API_PROVIDER, get_endpoint_security_dict, info, auth_guard
-from oceana_jwt_auth.database.db import db, SecEndpoint, SecIdentity
+    OCEANA_API_PROVIDER, db, get_endpoint_security_dict, info, auth_guard
+from oceana_jwt_auth.models import SecIdentity, SecEndpoint
+
 from oceana_jwt_auth.utils.constants import ENDPOINT_SECURITY_LABEL
 
 

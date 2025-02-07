@@ -1,5 +1,6 @@
 from sqlalchemy import select
-from ..database.db import db, SecIdentity, SecEndpoint
+from ..database import db
+from ..models import SecIdentity, SecEndpoint
 
 
 def get_identity(provider, client_type, client_id):

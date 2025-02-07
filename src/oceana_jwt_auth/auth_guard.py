@@ -154,7 +154,7 @@ def handle_secured_route(endpoint_id, admin, optional, allowed: List[str]) -> bo
             # Admin can access to the endpoint
             raise ClientAuthenticationError("Only an admin can access to this route")
     else:
-        # Verification for token
+        # Verification for token. Will throw HttpResponseError exception if not allowed
         verification_for_token(
             endpoint_id=endpoint_id,
             jwt_header=jwt_header,
@@ -162,6 +162,8 @@ def handle_secured_route(endpoint_id, admin, optional, allowed: List[str]) -> bo
             optional=optional,
             allowed=allowed,
             roles=roles)
+        # If no exception was thrown access is allowed
+        allow = True
     return allow
 
 

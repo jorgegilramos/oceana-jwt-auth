@@ -1,6 +1,7 @@
 from sqlalchemy import Column, PrimaryKeyConstraint, inspect
 
-from ...database.db import db
+# from ...database.db import db
+from ...database import db
 from ...config import Config  # noqa: F401
 from ...utils import EXTENSION_BIND
 
@@ -11,8 +12,11 @@ from ...utils import EXTENSION_BIND
 # 	client_hash varchar(1000) NOT NULL,
 # 	client_salt varchar(200) NOT NULL,
 # 	roles varchar(1000) NULL,
+#   enabled boolean default TRUE,
 # 	CONSTRAINT sec_identity_pkey PRIMARY KEY (provider, client_type, client_id)
 # );
+
+# ALTER TABLE frn.sec_identity ADD COLUMN enabled BOOLEAN DEFAULT true;
 
 
 class SecIdentity(db.Model):
@@ -34,7 +38,7 @@ class SecIdentity(db.Model):
         PrimaryKeyConstraint("provider", "client_type", "client_id"),
         {
             "extend_existing": True,
-            "schema": Config.DB_SCHEMA
+            "schema": Config.OCEANA_API_DB_AUTH_SCHEMA
         }
     )
 
@@ -81,7 +85,7 @@ class SecEndpoint(db.Model):
         PrimaryKeyConstraint("provider", "endpoint"),
         {
             "extend_existing": True,
-            "schema": Config.DB_SCHEMA
+            "schema": Config.OCEANA_API_DB_AUTH_SCHEMA
         }
     )
 

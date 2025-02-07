@@ -6,7 +6,7 @@ from typing import Dict
 
 from .utils.constants import AuthClientType
 from .utils.utils import debug
-from .database.auth_repository import get_identity
+from .database import get_identity
 from .exceptions import ClientAuthenticationError
 
 

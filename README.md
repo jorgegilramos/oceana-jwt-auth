@@ -258,5 +258,5 @@ pip uninstall oceana_jwt_auth
 
 
 ## Releases
-**Version 0.0.5**:
+**Version 0.0.6**:
    - First version
