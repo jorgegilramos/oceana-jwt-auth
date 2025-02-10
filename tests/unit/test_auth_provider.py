@@ -2,7 +2,7 @@ import pytest
 from flask import Flask
 
 from oceana_jwt_auth import authenticate, OCEANA_API_PROVIDER
-from oceana_jwt_auth.auth_provider import generate_key, generate_salt
+from oceana_jwt_auth.utils import generate_key, generate_salt
 from oceana_jwt_auth.auth import default_authentication
 from oceana_jwt_auth.exceptions import ClientAuthenticationError, \
     ClientBadRequestException

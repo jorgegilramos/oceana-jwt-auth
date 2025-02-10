@@ -129,7 +129,7 @@ Config authorization witha a Postgres database:
 # Import Postgres configuration object
 from oceana_jwt_auth import JWTExtension, ConfigPostgres
 
-app[SQLALCHEMY_DATABASE_URI] = "postgresql://postgres:postgres@127.0.0.1:5432/oceana_jwt_auth"
+app[SQLALCHEMY_DATABASE_URI] = "postgresql://postgres:postgres@localhost:5432/oceana_jwt_auth"
 
 
 JWTExtension(app=app, api=api, config_object=ConfigPostgres)
@@ -138,12 +138,12 @@ JWTExtension(app=app, api=api, config_object=ConfigPostgres)
 Connection string can be stored in environment parameters:
 ```bash
 # Connection configuration
-SQLALCHEMY_DATABASE_URI="postgresql://postgres:postgres@127.0.0.1:5432/oceana_jwt_auth"
+SQLALCHEMY_DATABASE_URI="postgresql://postgres:postgres@localhost:5432/oceana_jwt_auth"
 ```
 or:
 ```bash
 # Connection configuration
-DB_HOST=127.0.0.1
+DB_HOST=localhost
 DB_NAME=oceana_jwt_auth
 DB_USERNAME=postgres
 DB_PASSWORD=postgres
@@ -194,12 +194,12 @@ coverage html
 
 ```shell
 # Reinstall avoiding reinstalling dependencies
-pip install --upgrade --no-deps --force-reinstall dist\oceana_jwt_auth-0.0.5-py3-none-any.whl
+pip install --upgrade --no-deps --force-reinstall dist\oceana_jwt_auth-0.0.7-py3-none-any.whl
 ```
 
 ```shell
 # Reinstall with dependencies
-pip install dist\oceana_jwt_auth-0.0.5-py3-none-any.whl --force-reinstall
+pip install dist\oceana_jwt_auth-0.0.7-py3-none-any.whl --force-reinstall
 ```
 
 Check style guide enforcement
@@ -258,5 +258,5 @@ pip uninstall oceana_jwt_auth
 
 
 ## Releases
-**Version 0.0.6**:
+**Version 0.0.7**:
    - First version

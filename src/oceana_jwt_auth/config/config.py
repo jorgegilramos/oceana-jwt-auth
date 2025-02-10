@@ -26,13 +26,15 @@ OCEANA_API_RSA_PUBLIC_KEY = _config("OCEANA_API_RSA_PUBLIC_KEY", default="", cas
 
 # Logger Configuration
 OCEANA_API_LOGGING_LEVEL = _config("OCEANA_API_LOGGING_LEVEL", "INFO")
-OCEANA_API_DEBUG = _config("OCEANA_API_DEBUG", False, cast=bool)
 OCEANA_API_LOGGING_DIR = _config("OCEANA_API_LOGGING_DIR", "logs")
 OCEANA_API_LOGGING_FILE = _config("OCEANA_API_LOGGING_FILE", "oceana-jwt-auth.log")
 OCEANA_API_LOGGING_WHEN = _config("OCEANA_API_LOGGING_WHEN", "midnight")
 OCEANA_API_LOGGING_INTERVAL = _config("OCEANA_API_LOGGING_INTERVAL", 1)
 OCEANA_API_LOGGING_TITLE = _config("OCEANA_API_LOGGING_TITLE", "oceana-jwt-auth")
 
+OCEANA_API_LOGGING_HANDLERS = _config("OCEANA_API_LOGGING_HANDLERS", "console,file_handler")
+OCEANA_API_LOGGING_FORMATTER = _config("OCEANA_API_LOGGING_FORMATTER",
+                                       "%(asctime)s - [%(name)s] - %(levelname)-5s - %(message)s")
 
 OCEANA_API_TOKEN_ALGORITHM = _config("OCEANA_API_TOKEN_ALGORITHM", "HS256")
 # Refresh token expiration in minutes

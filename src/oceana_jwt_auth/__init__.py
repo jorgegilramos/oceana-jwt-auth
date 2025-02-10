@@ -4,6 +4,7 @@ from .utils import logger, EXTENSION_NAME, EXTENSION_BIND, \
     ENDPOINT_SECURITY_LABEL, API_AUTH_DESCRIPTION, \
     RestMethod, AuthClientType, AuthAPIRoles, \
     string_base64, base64_string, info, debug, error, warning, critical
+from .utils.crypto import generate_key, generate_salt, hash_string, safe_str_cmp
 from .auth_guard import auth_guard, get_jwt, get_identity, verify_jwt
 from .auth import authorizations, security, register_auth_namespace
 from .jwt_extension import JWTExtension
@@ -15,7 +16,7 @@ from .jwt_handler import create_access_token
 from .auth_provider import authenticate
 from .api.common import handle_exceptions
 
-__version__ = "0.0.6"
+__version__ = "0.0.7"
 
 __all__ = [
     "BaseConfig", "Config", "ConfigSqlAlchemy", "ConfigSqlite", "ConfigPostgres",
@@ -26,6 +27,7 @@ __all__ = [
     "ENDPOINT_SECURITY_LABEL",
     "API_AUTH_DESCRIPTION", "RestMethod", "AuthClientType", "AuthAPIRoles",
     "string_base64", "base64_string", "info", "debug", "error", "warning", "critical",
+    "generate_key", "generate_salt", "hash_string", "safe_str_cmp",
     "authorizations", "security", "register_auth_namespace",
     "auth_guard", "get_jwt", "get_identity", "verify_jwt",
     "JWTExtension", "db", "get_endpoint_security_dict", "SecIdentity", "SecEndpoint",

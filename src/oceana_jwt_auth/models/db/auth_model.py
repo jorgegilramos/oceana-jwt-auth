@@ -1,6 +1,5 @@
 from sqlalchemy import Column, PrimaryKeyConstraint, inspect
 
-# from ...database.db import db
 from ...database import db
 from ...config import Config  # noqa: F401
 from ...utils import EXTENSION_BIND
