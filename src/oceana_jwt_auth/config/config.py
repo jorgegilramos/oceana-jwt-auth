@@ -172,10 +172,11 @@ class BaseConfig:
     SQLALCHEMY_DATABASE_URI = "sqlite:///:memory:"
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     SQLALCHEMY_RECORD_QUERIES = False
-    DB_SCHEMA = _config("DB_SCHEMA", default="public")
+    # DB_SCHEMA = _config("DB_SCHEMA", default="public")
 
     OCEANA_API_DB_AUTH_PASSWORD = _config("OCEANA_API_DB_AUTH_PASSWORD", default=None)
-    OCEANA_API_DB_AUTH_SCHEMA = _config("OCEANA_API_DB_AUTH_SCHEMA", default=DB_SCHEMA)
+    # OCEANA_API_DB_AUTH_SCHEMA = _config("OCEANA_API_DB_AUTH_SCHEMA", default=DB_SCHEMA)
+    OCEANA_API_DB_AUTH_SCHEMA = _config("OCEANA_API_DB_AUTH_SCHEMA", default="public")
 
     # OAUTH2_PROVIDERS = {
     #     "azure": {
@@ -206,13 +207,14 @@ class BaseConfig:
 
 # Database Configuration POSTGRESQL
 class Config(BaseConfig):
-    DB_HOST = _config("DB_HOST", default=None)
-    DB_NAME = _config("DB_NAME", default=None)
-    DB_USERNAME = _config("DB_USERNAME", default=None)
-    DB_PASSWORD = None if (_passwd := _config("DB_PASSWORD", default=None)) is None else quote_plus(_passwd)
-    DB_PORT = _config("DB_PORT", default=5432, cast=int)
-    DB_SCHEMA = _config("DB_SCHEMA", default="public")
-    DB_CREATE_ENTITIES = _config("DB_CREATE_ENTITIES", default=True, cast=bool)
+    DB_HOST = _config("OCEANA_API_DB_AUTH_HOST", default=None)
+    DB_NAME = _config("OCEANA_API_DB_AUTH_DATABASE", default=None)
+    DB_USERNAME = _config("OCEANA_API_DB_AUTH_USERNAME", default=None)
+    DB_PASSWORD = None if (_passwd := _config("OCEANA_API_DB_AUTH_PASSWORD", default=None)) is None \
+        else quote_plus(_passwd)
+    DB_PORT = _config("OCEANA_API_DB_AUTH_PORT", default=5432, cast=int)
+    DB_SCHEMA = _config("OCEANA_API_DB_AUTH_SCHEMA", default="public")
+    DB_CREATE_ENTITIES = _config("OCEANA_API_DB_AUTH_CREATE_ENTITIES", default=True, cast=bool)
 
 
 class ConfigSqlAlchemy(Config):

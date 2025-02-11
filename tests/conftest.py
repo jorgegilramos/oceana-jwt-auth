@@ -206,8 +206,9 @@ def test_app():
 ns_test = Namespace("Test", description="Test API", path="/v1")
 
 jwt = JWTExtension(config_object=ConfigSqlite)
-app = jwt.init_app()
-api = jwt.api()
+jwt.init_app()
+app = jwt.app
+api = jwt.api
 
 with app.app_context():
     _populate_endpoint_security_data(db.session)

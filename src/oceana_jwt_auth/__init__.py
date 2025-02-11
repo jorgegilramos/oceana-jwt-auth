@@ -16,7 +16,7 @@ from .jwt_handler import create_access_token
 from .auth_provider import authenticate
 from .api.common import handle_exceptions
 
-__version__ = "0.0.7"
+__version__ = "0.0.8"
 
 __all__ = [
     "BaseConfig", "Config", "ConfigSqlAlchemy", "ConfigSqlite", "ConfigPostgres",

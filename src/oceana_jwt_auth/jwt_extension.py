@@ -260,6 +260,14 @@ class JWTExtension():
         """
         return self._config
 
+    @property
+    def app(self) -> Flask:
+        """
+        Get application instance (Flask)
+        """
+        return self._app
+
+    @property
     def api(self) -> Api:
         """
         Get application Api instance (Flask RestX)

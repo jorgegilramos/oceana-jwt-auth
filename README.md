@@ -143,13 +143,13 @@ SQLALCHEMY_DATABASE_URI="postgresql://postgres:postgres@localhost:5432/oceana_jw
 or:
 ```bash
 # Connection configuration
-DB_HOST=localhost
-DB_NAME=oceana_jwt_auth
-DB_USERNAME=postgres
-DB_PASSWORD=postgres
-DB_PORT=5432
-DB_SCHEMA=public
-DB_CREATE_ENTITIES=true
+OCEANA_API_DB_AUTH_HOST=localhost
+OCEANA_API_DB_AUTH_DATABASE=oceana_jwt_auth
+OCEANA_API_DB_AUTH_USERNAME=postgres
+OCEANA_API_DB_AUTH_PASSWORD=postgres
+OCEANA_API_DB_AUTH_PORT=5432
+OCEANA_API_DB_AUTH_SCHEMA=public
+OCEANA_API_DB_AUTH_CREATE_ENTITIES=true
 ```
 
 
@@ -194,17 +194,17 @@ coverage html
 
 ```shell
 # Reinstall avoiding reinstalling dependencies
-pip install --upgrade --no-deps --force-reinstall dist\oceana_jwt_auth-0.0.7-py3-none-any.whl
+pip install --upgrade --no-deps --force-reinstall dist\oceana_jwt_auth-0.0.8-py3-none-any.whl
 ```
 
 ```shell
 # Reinstall with dependencies
-pip install dist\oceana_jwt_auth-0.0.7-py3-none-any.whl --force-reinstall
+pip install dist\oceana_jwt_auth-0.0.8-py3-none-any.whl --force-reinstall
 ```
 
 Check style guide enforcement
 ```shell
-flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
+flake8 . --count --exit-zero --max-complexity=10 --max-line-length=120 --statistics
 ```
 
 Tox
@@ -258,5 +258,5 @@ pip uninstall oceana_jwt_auth
 
 
 ## Releases
-**Version 0.0.7**:
+**Version 0.0.8**:
    - First version
