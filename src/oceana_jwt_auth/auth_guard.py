@@ -1,4 +1,11 @@
-""" auth_guard module """
+"""
+auth_guard module
+
+This module provides utilities for handling JWT authentication and authorization
+in a Flask application. It includes functions for extracting and verifying JWT tokens,
+as well as decorators for protecting routes.
+"""
+
 import base64
 import json
 from typing import List, Union
@@ -21,7 +28,17 @@ from .config import config
 
 def get_token_from_header(allow_missing: bool = False) -> Union[str, None]:
     """
-    Get token from header
+    Extracts the JWT token from the Authorization header in the request.
+
+    :param bool allow_missing:
+        If True, the function will not raise an exception if the Authorization header is missing.
+        Defaults to False.
+
+    :return:
+        The JWT token as a string if present, otherwise None if allow_missing is True.
+
+    :raises:
+        :class:`ClientBadRequestException` if the Authorization header is missing and allow_missing is False.
     """
 
     token = request.headers.get("Authorization")
@@ -82,7 +99,11 @@ def verify_jwt(optional: bool = False) -> Tuple[dict, dict]:
         present in the request. If ``optional=True`` and no JWT is in the request,
         empty dictionaries will be returned instead. Raise an exception if an invalid JWT
         is in the request.
-"""
+
+    :raises:
+        :class:`ClientAuthenticationError` if the token is invalid or expired.
+        :class:`ClientIssuerException` if the token issuer is invalid.
+    """
 
     jwt_data = g._jwt_oceana_jwt_data if hasattr(g, "_jwt_oceana_jwt_data") else {}
     jwt_header = g._jwt_oceana_jwt_header if hasattr(g, "_jwt_oceana_jwt_header") else {}
@@ -109,9 +130,17 @@ def verify_jwt(optional: bool = False) -> Tuple[dict, dict]:
     return jwt_data, jwt_header
 
 
-def decode_unverified_jwt_request() -> None:
+def decode_unverified_jwt_request() -> Tuple[dict, dict]:
     """
-    Decode unverified JWT request
+    Decodes the given JWT token without verifying its signature.
+
+    :return:
+        A tuple containing two dictionaries:
+        - The decoded payload of the JWT token.
+        - The unverified header of the JWT token.
+
+    :raises:
+        :class:`ClientBadRequestException` if the token is invalid or cannot be decoded.
     """
     jwt_data = {}
     unverified_header = {}
@@ -136,7 +165,25 @@ def decode_unverified_jwt_request() -> None:
 
 def handle_secured_route(endpoint_id, admin, optional, allowed: List[str]) -> bool:
     """
-    Handle secure route
+    Handles the security for a route by verifying the JWT token and checking the user's roles.
+
+    :param endpoint_id:
+        The identifier of the endpoint being accessed.
+
+    :param bool admin:
+        If True, only users with the admin role are allowed to access the endpoint.
+
+    :param bool optional:
+        If True, the presence of a JWT token in the request is optional.
+
+    :param List[str] allowed:
+        A list of roles that are allowed to access the endpoint.
+
+    :return:
+        True if the user is allowed to access the endpoint, otherwise raises an exception.
+
+    :raises:
+        :class:`ClientAuthenticationError` if the user is not allowed to access the endpoint.
     """
 
     # Verify jwt, if not optional then raises verification exceptions issuer, subject and
@@ -169,8 +216,34 @@ def handle_secured_route(endpoint_id, admin, optional, allowed: List[str]) -> bo
 
 def handle_route_exceptions(route_function, secured, admin, optional, *args, **kwargs):
     """
-    Route decorator logic to be executed in a decorated view function.
-    Throw exceptions
+    Handles route exceptions by applying security checks and executing the decorated view function.
+
+    :param route_function:
+        The original route function to be executed.
+
+    :param bool secured:
+        If True, the client must be authenticated with a valid JWT token.
+
+    :param bool admin:
+        If True, only users with the admin role are allowed to access the endpoint.
+
+    :param bool optional:
+        If True, the presence of a JWT token in the request is optional.
+
+    :param args:
+        Additional positional arguments to be passed to the route function.
+
+    :param kwargs:
+        Additional keyword arguments to be passed to the route function.
+
+    :return:
+        The response from the original route function.
+
+    :raises:
+        :class:`HttpResponseError` if there is an error in the HTTP response.
+        :class:`ClientAuthenticationError` if the client is not authenticated.
+        :class:`ClientBadRequestException` if the request is bad.
+        :class:`ClientIssuerException` if the token issuer is invalid.
     """
     # Application configuration contains endpoint security
     endpoint_security = current_app.config[ENDPOINT_SECURITY_LABEL]
@@ -181,9 +254,6 @@ def handle_route_exceptions(route_function, secured, admin, optional, *args, **k
     # Decode JWT token if it is present, and stores jwt and header in
     # user's request variables so can be used afterwards
     jwt_data_unverified, _ = decode_unverified_jwt_request()
-
-    # jwt_extension = get_jwt_extension()
-    # aaa = jwt_extension._config().api_secured
 
     # Api security disabled globally (not recommended)
     if not config.api_secured:
@@ -225,7 +295,28 @@ def handle_route_exceptions(route_function, secured, admin, optional, *args, **k
 def handle_route(route_function, secured, admin, optional, *args, **kwargs) -> Response:
     """
     Route decorator logic to be executed in a decorated view function.
-    Captures exceptions
+    Captures exceptions and applies security checks, creating a proper response instead of raising exceptions.
+
+    :param route_function:
+        The original route function to be executed.
+
+    :param bool secured:
+        If True, the client must be authenticated with a valid JWT token.
+
+    :param bool admin:
+        If True, only users with the admin role are allowed to access the endpoint.
+
+    :param bool optional:
+        If True, the presence of a JWT token in the request is optional.
+
+    :param args:
+        Additional positional arguments to be passed to the route function.
+
+    :param kwargs:
+        Additional keyword arguments to be passed to the route function.
+
+    :return:
+        The response from the original route function or an error response if an exception occurs.
     """
 
     # Get endpoint qualified name
@@ -261,20 +352,26 @@ def handle_route(route_function, secured, admin, optional, *args, **kwargs) -> R
 
 def auth_guard(**kwargs):
     """
-    Decorator to protect routes.
+    Decorator to protect routes by enforcing authentication and authorization.
 
     :param bool secured:
-        Secured means if client must be valid authenticated with a valid jwt token
+        If True, the client must be authenticated with a valid JWT token.
+        Defaults to False.
+
     :param bool admin:
-        If only role admin is allowed to access endpoint. It overrides endpoint configuration
-        from database.
+        If True, only users with the admin role are allowed to access the endpoint.
+        This overrides the endpoint configuration from the database.
+        Defaults to False.
+
     :param bool optional:
-        If ``True``, do not raise an error if no JWT is present in the request.
-        Defaults to ``False``.
+        If True, the presence of a JWT token in the request is optional.
+        Defaults to False.
+
+    :return:
+        A decorator function that wraps the original function with authentication and authorization checks.
 
     :raises:
-        :class:`~Exception` if the secret doesn't exist, missing access token or
-        Authorization header doesn't follow pattern \"Bearer <token_value>\"
+        :class:`~Exception` if the secret doesn't exist, the access token is missing, or the Authorization header doesn't follow the pattern "Bearer <token_value>".
     """
     secured: bool = kwargs.get("secured", False)
     admin: bool = kwargs.get("admin", False)
@@ -337,7 +434,31 @@ def verification_for_token(endpoint_id: str,
                            optional: bool,
                            allowed: List[str],
                            roles: List[str]):
+    """
+    Verifies the JWT token for the given endpoint by checking the issuer and calling a custom verification callback.
 
+    :param str endpoint_id:
+        The identifier of the endpoint being accessed.
+
+    :param dict jwt_header:
+        The header of the JWT token.
+
+    :param dict jwt_data:
+        The decoded payload of the JWT token.
+
+    :param bool optional:
+        If True, the presence of a JWT token in the request is optional.
+
+    :param List[str] allowed:
+        A list of roles that are allowed to access the endpoint.
+
+    :param List[str] roles:
+        A list of roles extracted from the JWT token.
+
+    :raises:
+        :class:`ClientIssuerException` if the token issuer is invalid.
+        :class:`HttpResponseError` if the token verification callback fails.
+    """
     jwt_extension = get_jwt_extension()
 
     # Issuer only has to be checked when configured jwt as optional, otherwise
