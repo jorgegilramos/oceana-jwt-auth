@@ -1,6 +1,10 @@
 # oceana_jwt_auth
-Oceana API library to add authorization in Flask Restx applications using JWT tokens.
 
+![Build Status](https://github.com/jorgegilramos/oceana-jwt-auth/workflows/Python%20package/badge.svg)
+[![PyPI version](https://badge.fury.io/py/oceana-jwt-auth.svg)](https://badge.fury.io/py/oceana-jwt-auth)
+![PyPI - Downloads](https://img.shields.io/pypi/dm/oceana-jwt-auth)
+
+Oceana API library to add authorization in Flask Restx applications using JWT tokens.
 
 ## Setup
 
@@ -125,7 +129,7 @@ Config authorization witha a Postgres database:
 # Import Postgres configuration object
 from oceana_jwt_auth import JWTExtension, ConfigPostgres
 
-app[SQLALCHEMY_DATABASE_URI] = "postgresql://postgres:postgres@127.0.0.1:5432/oceana_jwt_auth"
+app[SQLALCHEMY_DATABASE_URI] = "postgresql://postgres:postgres@localhost:5432/oceana_jwt_auth"
 
 
 JWTExtension(app=app, api=api, config_object=ConfigPostgres)
@@ -134,18 +138,18 @@ JWTExtension(app=app, api=api, config_object=ConfigPostgres)
 Connection string can be stored in environment parameters:
 ```bash
 # Connection configuration
-SQLALCHEMY_DATABASE_URI="postgresql://postgres:postgres@127.0.0.1:5432/oceana_jwt_auth"
+SQLALCHEMY_DATABASE_URI="postgresql://postgres:postgres@localhost:5432/oceana_jwt_auth"
 ```
 or:
 ```bash
 # Connection configuration
-DB_HOST=127.0.0.1
-DB_NAME=oceana_jwt_auth
-DB_USERNAME=postgres
-DB_PASSWORD=postgres
-DB_PORT=5432
-DB_SCHEMA=public
-DB_CREATE_ENTITIES=true
+OCEANA_API_DB_AUTH_HOST=localhost
+OCEANA_API_DB_AUTH_DATABASE=oceana_jwt_auth
+OCEANA_API_DB_AUTH_USERNAME=postgres
+OCEANA_API_DB_AUTH_PASSWORD=postgres
+OCEANA_API_DB_AUTH_PORT=5432
+OCEANA_API_DB_AUTH_SCHEMA=public
+OCEANA_API_DB_AUTH_CREATE_ENTITIES=true
 ```
 
 
@@ -190,17 +194,17 @@ coverage html
 
 ```shell
 # Reinstall avoiding reinstalling dependencies
-pip install --upgrade --no-deps --force-reinstall dist\oceana_jwt_auth-0.0.4-py3-none-any.whl
+pip install --upgrade --no-deps --force-reinstall dist\oceana_jwt_auth-0.0.8-py3-none-any.whl
 ```
 
 ```shell
 # Reinstall with dependencies
-pip install dist\oceana_jwt_auth-0.0.4-py3-none-any.whl --force-reinstall
+pip install dist\oceana_jwt_auth-0.0.8-py3-none-any.whl --force-reinstall
 ```
 
 Check style guide enforcement
 ```shell
-flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
+flake8 . --count --exit-zero --max-complexity=10 --max-line-length=120 --statistics
 ```
 
 Tox
@@ -254,5 +258,5 @@ pip uninstall oceana_jwt_auth
 
 
 ## Releases
-**Version 0.0.4**:
+**Version 0.0.8**:
    - First version

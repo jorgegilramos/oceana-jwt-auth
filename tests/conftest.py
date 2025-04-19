@@ -3,8 +3,9 @@ from flask import Flask, Blueprint, jsonify
 from flask_restx import Api, Namespace, Resource
 
 from oceana_jwt_auth import JWTExtension, ConfigSqlite, authorizations, security, \
-    OCEANA_API_PROVIDER, get_endpoint_security_dict, info, auth_guard
-from oceana_jwt_auth.database.db import db, SecEndpoint, SecIdentity
+    OCEANA_API_PROVIDER, db, get_endpoint_security_dict, info, auth_guard
+from oceana_jwt_auth.models import SecIdentity, SecEndpoint
+
 from oceana_jwt_auth.utils.constants import ENDPOINT_SECURITY_LABEL
 
 
@@ -205,8 +206,9 @@ def test_app():
 ns_test = Namespace("Test", description="Test API", path="/v1")
 
 jwt = JWTExtension(config_object=ConfigSqlite)
-app = jwt.init_app()
-api = jwt.api()
+jwt.init_app()
+app = jwt.app
+api = jwt.api
 
 with app.app_context():
     _populate_endpoint_security_data(db.session)
