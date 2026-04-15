@@ -1,3 +1,88 @@
 [build-system]
-requires = ["setuptools"]
+requires = ["setuptools>=78.1.0", "wheel>=0.45.1", "build>=1.2.2"]
 build-backend = "setuptools.build_meta"
+
+[tool.pytest.ini_options]
+env = [
+    "OCEANA_API_PROVIDER=OceanaAPI",
+    # Security properties
+    "OCEANA_API_SECURED=true",
+    # Oceana API Secret key
+    "OCEANA_API_SECRET_KEY=secret_key"
+]
+
+[project]
+name = "oceana_jwt_auth"
+version = "0.0.9"
+description = "Oceana API library to manage JWT token in Flask Restx applications"
+authors = [ {name = "Jorge Gil Ramos"}]
+license = "MIT"
+license-files = []
+readme = "README.md"
+# license = "MIT AND (Apache-2.0 OR BSD-2-Clause)"
+# keywords = ["flask", "jwt", "restx", "auth", "oauth", "oceana"]
+requires-python = ">=3.12"
+dependencies = [
+    "requests>=2.29.0",
+    "python-decouple==3.8",
+    "flask>=3.1.0",
+    "flask-restx>=1.3.0",
+    "typing-extensions>=4.12.2",
+    "pyjwt>=2.8.0",
+    "SQLAlchemy>=2.0.36",
+    "Flask-SQLAlchemy>=3.1.1",
+    "cryptography>=41.0.7",
+    # Postgres
+    "psycopg2>=2.9.9"
+]
+# Classifiers help users find your project by categorizing it. For a list of valid classifiers, see:
+# https://pypi.org/classifiers/
+classifiers=[
+    "Development Status :: 5 - Production/Stable",
+    "Environment :: Web Environment",
+    "Intended Audience :: Developers",
+    "Operating System :: MacOS :: MacOS X",
+    "Operating System :: Microsoft :: Windows",
+    "Operating System :: POSIX",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3 :: Only",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
+    "Programming Language :: Python :: Implementation :: PyPy",
+    "Operating System :: OS Independent",
+    "Topic :: Software Development",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+    "Topic :: Internet :: WWW/HTTP :: HTTP Servers",
+    "Topic :: Internet :: WWW/HTTP :: WSGI :: Application",
+    "Topic :: Security",
+    "Framework :: Flask"
+]
+
+[project.urls]
+Source = "https://github.com/jorgegilramos/oceana-jwt-auth"
+
+[tool.setuptools]
+package-dir = { "" = "src" }
+
+[tool.setuptools.packages.find]
+where = ["src"]
+exclude = ["tests*"]
+
+# [project.optional-dependencies]
+# test = [
+#     "requests>=2.29.0", 
+#     "python-decouple>=3.8",
+#     "flask>=3.1.0",
+#     "flask-restx>=1.3.0",
+#     "typing-extensions>=4.12.2",
+#     "pyjwt>=2.8.0",
+#     "SQLAlchemy>=2.0.36",
+#     "Flask-SQLAlchemy>=3.1.1",
+#     "cryptography>=41.0.7",
+#     "requests-mock>=1.12.1",
+#     "pytest>=8.3.3",
+#     "pytest-env>=1.1.5",
+#     "coverage>=6.4.4",
+#     "flake8>=4.0.1"
+# ]

@@ -1,14 +1,68 @@
 # oceana_jwt_auth
 
 ![Build Status](https://github.com/jorgegilramos/oceana-jwt-auth/workflows/Python%20package/badge.svg)
+![Supported Python Versions](https://img.shields.io/pypi/pyversions/oceana_jwt_auth)
 [![PyPI version](https://badge.fury.io/py/oceana-jwt-auth.svg)](https://badge.fury.io/py/oceana-jwt-auth)
 ![PyPI - Downloads](https://img.shields.io/pypi/dm/oceana-jwt-auth)
 
-Oceana API library to add authorization in Flask Restx applications using JWT tokens.
+## Description
 
-## Setup
+**oceana-jwt-auth** library is designed to be a drop-in solution for adding JWT-based authentication to Flask-RestX applications with minimal configuration while providing extensive customization options for complex security requirements.
 
-Install latest version
+## Main Features
+**JWT Token Management**
+- **Token Creation & Validation**: Generate and validate JWT tokens using multiple algorithms (HS256, HS384, HS512, ES256, RS256, etc.)
+- **Flexible Token Configuration**: Configurable token expiration, issuer, audience, and algorithms
+- **RSA Support**: Support for RSA public/private key encryption for enhanced security
+
+**Flask-RestX Integration**
+- **Native Integration**: Purpose-built for Flask-RestX applications with automatic API documentation
+- **Swagger Documentation**: Automatic security documentation in Swagger UI with authorization support
+- **Namespace Support**: Seamless integration with Flask-RestX namespaces and blueprints
+
+**Authorization & Authentication**
+
+- **Role-Based Access Control (RBAC)**: Support for user roles and permissions
+- **Multi-level Security**:
+  - `@auth_guard(secured=True)` - Basic authentication
+  - `@auth_guard(admin=True)` - Admin-level access
+  - Custom decorators for specific business logic
+- Identity Management: Built-in user identity and endpoint security models
+
+**Database Integration**
+- **Multiple Database Support**:
+  - SQLite (for development/testing)
+  - PostgreSQL (for production)
+  - Configurable via environment variables or connection strings
+- **Automatic Schema Management**: Auto-creation of security tables (`sec_identity`, `sec_endpoint`)
+- SQLAlchemy Integration: Built on Flask-SQLAlchemy for robust ORM support
+
+**Configuration Management**
+- **Environment-Based Configuration**: Comprehensive environment variable support
+- **Multiple Configuration Classes**: Pre-built configurations for different deployment scenarios
+- **Flexible Setup**: Support for both direct instantiation and application factory patterns
+
+**Security Features**
+- **Cryptographic Utilities**: Built-in password hashing, salt generation, and secure string comparison
+- **Token Verification**: Configurable token verification with custom callbacks
+- **Exception Handling**: Comprehensive error handling with custom exception types
+- **Request Validation**: Automatic validation of authorization headers and token format
+
+**Production Ready**
+- **Environment Variable Support**: Full 12-factor app compliance (to the [Twelve-Factor App methodology](https://12factor.net)
+- **Database Connection Pooling**: Efficient database connection management
+- **Token Refresh**: Support for refresh tokens with configurable expiration
+- **Configurable Security**: Global and per-endpoint security configuration
+
+**Developer Experience**
+- **Logging Integration**: Built-in logging with configurable levels and handlers
+- **Error Handling Decorators**: `@handle_exceptions()` decorator for consistent error responses
+- **Mock Data Support**: Built-in tools for testing and development
+- **Extensive Examples**: Complete usage examples for different scenarios
+
+## Installation
+
+Install latest version from PyPI:
 ```shell
 pip install oceana_jwt_auth
 ```
@@ -16,6 +70,19 @@ pip install oceana_jwt_auth
 ## Usage
 
 Code is provided in examples directory.
+
+Easy Integration:
+```python
+# Simple setup
+from oceana_jwt_auth import JWTExtension, auth_guard
+
+jwt = JWTExtension(app=app, api=api)
+
+@auth_guard(secured=True)
+def protected_endpoint():
+    return {"message": "Authorized access"}
+```
+
 
 Create Flask application and JWTExtension:
 ```python
@@ -194,12 +261,12 @@ coverage html
 
 ```shell
 # Reinstall avoiding reinstalling dependencies
-pip install --upgrade --no-deps --force-reinstall dist\oceana_jwt_auth-0.0.8-py3-none-any.whl
+pip install --upgrade --no-deps --force-reinstall dist\oceana_jwt_auth-0.0.9-py3-none-any.whl
 ```
 
 ```shell
 # Reinstall with dependencies
-pip install dist\oceana_jwt_auth-0.0.8-py3-none-any.whl --force-reinstall
+pip install dist\oceana_jwt_auth-0.0.9-py3-none-any.whl --force-reinstall
 ```
 
 Check style guide enforcement
@@ -223,40 +290,25 @@ pip uninstall oceana_jwt_auth
 
 ## Dependencies
 
-| Library                | Version |
-|------------------------|---------|
-| build                  | 1.2.1   |
-| setuptools             | 67.8.0  |
-| wheel                  | 0.38.4  |
-| requests               | 2.29.0  |
-| flake8                 | 4.0.1   |
-| python-decouple        | 3.8     |
-| flask                  | 3.1.0   |
-| flask-restx            | 1.3.0   |
-| typing-extensions      | 4.12.2  |
-| pyjwt                  | 2.8.0   |
-| SQLAlchemy             | 2.0.36  |
-| Flask-SQLAlchemy       | 3.1.1   |
-| cryptography           | 41.0.7  |
-
-
-# Tests requirements
-| Library                | Version |
-|------------------------|---------|
-| requests-mock          | 1.21.1  |
-| pytest                 | 7.4.0   |
-| pytest-env             | 1.1.5   |
-| coverage               | 6.4.4   |
-| flake8                 | 4.0.1   |
-| tox                    | 4.23.2  |
-
-
-# Postgres
-| Library                | Version |
-|------------------------|---------|
-| psycopg2               | 2.9.9   |
+| Library                | Version    |
+|------------------------|------------|
+| requests               | >= 2.29.0  |
+| python-decouple        | == 3.8     |
+| flask                  | >= 3.1.0   |
+| flask-restx            | >= 1.3.0   |
+| typing-extensions      | >= 4.12.2  |
+| pyjwt                  | >= 2.8.0   |
+| SQLAlchemy             | >= 2.0.36  |
+| Flask-SQLAlchemy       | >= 3.1.1   |
+| cryptography           | >= 41.0.7  |
+| psycopg2               | >= 2.9.9   |
 
 
 ## Releases
+
+**Version 0.0.9**:
+   - Python upgraded ["3.9", "3.10", "3.11"] -> ["3.12", "3.13", "3.14"]
+   - Upgrading libraries dependencies
+
 **Version 0.0.8**:
    - First version

@@ -24,6 +24,7 @@ from .exceptions import HttpResponseError, ClientAuthenticationError, \
     ClientBadRequestException, ClientIssuerException
 
 from .config import config
+from .config import endpoint_options
 
 
 def get_token_from_header(allow_missing: bool = False) -> Union[str, None]:
@@ -333,18 +334,23 @@ def handle_route(route_function, secured, admin, optional, *args, **kwargs) -> R
     except HttpResponseError as e:
         error_msg = f"Bearer {e.error_description()}"
         error(f"{error_msg}")
+        error(f"Exception: {e}", exc_info=True)
         http_code = e.status_code
         headers = {"WWW-Authenticate": f"{error_msg}"}
         return response_api_error(http_code=http_code, error=error_msg, headers=headers, endpoint=endpoint_id)
     except Exception as e:
         error_msg = f"{e}"
+        error(f"{error_msg}")
+        error(f"Exception: {e}", exc_info=True)
         http_code = int(HTTPStatus.INTERNAL_SERVER_ERROR.value)
         headers = {"WWW-Authenticate": f"{error_msg}"}
         return response_api_error(http_code=http_code, error=error_msg, headers=headers, endpoint=endpoint_id)
     except BaseException as e:
         error_token = "Token validation failed"
         error_msg = f"Bearer error=\"invalid_token\" error_description=\"{error_token}\""
-        error(f"{error_msg}. Exception: {e}")
+        # error(f"{error_msg}. Exception: {e}", exc_info=True)
+        error(f"{error_msg}")
+        error(f"Exception: {e}", exc_info=True)
         http_code = int(HTTPStatus.UNAUTHORIZED.value)
         headers = {"WWW-Authenticate": f"{error_msg}"}
         return response_api_error(http_code=http_code, error=error_msg, headers=headers, endpoint=endpoint_id)
@@ -371,7 +377,8 @@ def auth_guard(**kwargs):
         A decorator function that wraps the original function with authentication and authorization checks.
 
     :raises:
-        :class:`~Exception` if the secret doesn't exist, the access token is missing, or the Authorization header doesn't follow the pattern "Bearer <token_value>".
+        :class:`~Exception` if the secret doesn't exist, the access token is missing, or the Authorization header
+        doesn't follow the pattern "Bearer <token_value>".
     """
     secured: bool = kwargs.get("secured", False)
     admin: bool = kwargs.get("admin", False)
@@ -399,7 +406,14 @@ def auth_guard(**kwargs):
                 **kwargs
             )
 
+        # Store endpoint security options configuration
+        endpoint_options[route_function.__qualname__] = {
+            "admin": admin,
+            "secured": secured,
+            "optional": optional
+        }
         decorated_function.__name__ = route_function.__name__
+
         return decorated_function
     return wrapper
 

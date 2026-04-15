@@ -10,7 +10,7 @@ from flask_restx import Api
 # from flask_wtf.csrf import CSRFProtect
 from urllib.parse import quote_plus
 
-from .config import Config, OCEANA_API_PROVIDER
+from .config import Config, OCEANA_API_PROVIDER, endpoint_options
 from .utils import info, debug, EXTENSION_NAME, EXTENSION_BIND, ENDPOINT_SECURITY_LABEL, \
     API_AUTH_DEFAULT_TITLE, API_AUTH_DEFAULT_VERSION, API_AUTH_DEFAULT_DESCRIPTION
 from .internals import default_user_claims_callback, default_token_header_callback, \
@@ -160,20 +160,22 @@ class JWTExtension():
         if "sqlalchemy" not in app.extensions:
             declarative_base.init_app(app)
 
-        # self._declarative_base = declarative_base
-
         with app.app_context():
             testing = hasattr(app, "testing") and bool(app.testing)
             debug(f"Testing: {testing}")
 
             # Show information about global security
-            info(f"API secured: {self._config.api_secured}")
+            api_secured = self._config.api_secured
+            info(f"API secured: {api_secured}")
 
             # Create all necessary database entities
             init_app(config_object, testing, declarative_base)
 
             # Get endpoint security from database
             self.update_auth_from_db()
+
+            # Detect application endpoints
+            self._detect_app_security(api_secured=api_secured)
 
             # Register authorization namespace (need context)
             if self._config.register_auth:
@@ -183,6 +185,78 @@ class JWTExtension():
             info(f"Registered authorization endpoints: {self._config.register_auth}")
 
         return app
+
+    def _security_endpoint_description(self, api_secured, endpoint_id, roles):
+        description = "Not secured (not in database)"
+        if endpoint_id in endpoint_options:
+            # Get endpoint options
+            options: dict[str, str] = endpoint_options[endpoint_id]
+            if options["admin"]:
+                description = "Only admin"  # pragma: no cover
+            elif not options["secured"]:
+                description = "Not secured"  # pragma: no cover
+            elif options["optional"]:
+                description = "Not secured (optional token)"  # pragma: no cover
+            else:
+                description = f"Allow: {roles}"
+        return description if api_secured else "(*) " + description
+
+    def _detect_app_endpoints(self) -> list:
+
+        # Search for application endpoints
+        detected_endpoints = []
+        for namespace in self._api.namespaces:
+            if namespace.description != "Default namespace":
+                for resource in namespace.resources:
+                    class_name = str(resource.resource).split(".")[-1].replace("'>", "")
+                    if "methods" in resource.kwargs:
+                        for method in resource.kwargs["methods"]:
+                            endpoint_id = f"{class_name}.{method.lower()}"
+                            detected_endpoints.append(endpoint_id)
+        detected_endpoints.sort()
+        return detected_endpoints
+
+    def _detect_app_security(self, api_secured: bool):
+        # Endpoints controlled by the extension
+        endpoints_db = self._app.config[ENDPOINT_SECURITY_LABEL].keys()
+
+        # Search for application endpoints
+        detected_endpoints = self._detect_app_endpoints()
+
+        # Security checks
+        num_detected = len(detected_endpoints)
+        info(f"Detected endpoints: {num_detected}")
+        if num_detected > 0:
+            info("-" * 100)
+            info("- endpoint_id" + " "*28 + "- security" + " "*31 + "- url")
+            info("-" * 100)
+            for endpoint_id in detected_endpoints:
+                url = ""
+                roles = []
+                if endpoint_id in endpoints_db:
+                    _endpoint: dict = self._app.config[ENDPOINT_SECURITY_LABEL][endpoint_id]
+                    url = _endpoint.get("url_template")
+                    roles = _endpoint.get("roles")
+
+                # Get security endpoint description
+                desc = self._security_endpoint_description(
+                    api_secured=api_secured,
+                    endpoint_id=endpoint_id,
+                    roles=roles)
+
+                _endpoint_id = f"{endpoint_id:38}"
+                _desc = f"{str(desc):38}"
+                info(f"- {_endpoint_id} - {_desc} - {url}")
+            if not api_secured:
+                info("- (*) Api not secured. This is not recommended in production, "
+                     "only for develop environments.")  # pragma: no cover
+            info("-" * 100)
+
+        # Security checks
+        rest_endpoints = list(set(endpoints_db) - set(detected_endpoints))
+        info(f"Endpoints in database and not detected: {len(rest_endpoints)}")
+        for endpoint_id in rest_endpoints:
+            info(f"    - {endpoint_id}")  # pragma: no cover
 
     def _app_config_from_object(self,
                                 app: Flask,
@@ -200,8 +274,11 @@ class JWTExtension():
                 if key not in sqlalchemy_keys:
                     value = getattr(obj, key)
                 else:
+                    # The properties configured in the application
+                    # overrides the configuration object properties
                     value = getattr(obj, key) if not app.config.get(key) \
                         else app.config[key]
+                # Assign key and value to application configuration
                 app.config[key] = value
                 setattr(self._config, key, value)
 
@@ -227,7 +304,7 @@ class JWTExtension():
 
         passwd_in_uri = str(uri.split("://")[1].split("@")[0]).find(":") > 0
         db_auth_uri = uri
-        if not passwd_in_uri:
+        if not passwd_in_uri:  # pragma: no cover
             if passwd is not None:
                 uri_split = uri.split("@")
                 if len(uri_split) == 2:
@@ -247,12 +324,12 @@ class JWTExtension():
         secured_endpoints = get_endpoint_security_dict(provider=OCEANA_API_PROVIDER)
         self._app.config[ENDPOINT_SECURITY_LABEL] = secured_endpoints
         setattr(self._app.config, ENDPOINT_SECURITY_LABEL, secured_endpoints)
-        info(f"Secured endpoints: {len(secured_endpoints)}")
+        debug(f"Secured endpoints in database: {len(secured_endpoints)}")
         # Show security endpoints information from database when the application is started
         for endpoint_id in secured_endpoints:  # pragma: no cover
             roles = secured_endpoints[endpoint_id].get("roles")
-            info(f"    - {endpoint_id}: {roles}")
-        debug(f"Endpoint security: {secured_endpoints}")
+            debug(f"    - {endpoint_id}: {roles}")
+        # debug(f"Endpoint security: {secured_endpoints}")
 
     def config(self) -> Config:
         """
