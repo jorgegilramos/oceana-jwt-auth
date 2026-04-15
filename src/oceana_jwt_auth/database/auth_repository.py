@@ -20,7 +20,9 @@ def get_identity(provider, client_type, client_id):
 def get_endpoint_security(provider):
 
     stmt = (
-        select(SecEndpoint).where(SecEndpoint.provider == provider)
+        select(SecEndpoint)
+        .where(SecEndpoint.provider == provider)
+        .order_by(SecEndpoint.endpoint)
     )
     return db.session.execute(statement=stmt).scalars().all()
 

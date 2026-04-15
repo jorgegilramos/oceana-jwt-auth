@@ -172,10 +172,8 @@ class BaseConfig:
     SQLALCHEMY_DATABASE_URI = "sqlite:///:memory:"
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     SQLALCHEMY_RECORD_QUERIES = False
-    # DB_SCHEMA = _config("DB_SCHEMA", default="public")
 
     OCEANA_API_DB_AUTH_PASSWORD = _config("OCEANA_API_DB_AUTH_PASSWORD", default=None)
-    # OCEANA_API_DB_AUTH_SCHEMA = _config("OCEANA_API_DB_AUTH_SCHEMA", default=DB_SCHEMA)
     OCEANA_API_DB_AUTH_SCHEMA = _config("OCEANA_API_DB_AUTH_SCHEMA", default="public")
 
     # OAUTH2_PROVIDERS = {
@@ -215,6 +213,11 @@ class Config(BaseConfig):
     DB_PORT = _config("OCEANA_API_DB_AUTH_PORT", default=5432, cast=int)
     DB_SCHEMA = _config("OCEANA_API_DB_AUTH_SCHEMA", default="public")
     DB_CREATE_ENTITIES = _config("OCEANA_API_DB_AUTH_CREATE_ENTITIES", default=True, cast=bool)
+    # Use this property to configure connection as an SQLAlchemy URI instead of specifying
+    # the following properties: DB_USERNAME, DB_HOST, DB_NAME and DB_PORT.
+    # Example:
+    #    OCEANA_API_DB_AUTH_CREATE_ENTITIES=postgresql://username@host:port/database
+    DB_AUTH_URI = _config("OCEANA_API_DB_AUTH_URI", default=None)
 
 
 class ConfigSqlAlchemy(Config):
@@ -230,7 +233,8 @@ class ConfigSqlAlchemy(Config):
 # SQLAlchemy Postgres Configuration (overwrite properties)
 class ConfigPostgres(ConfigSqlAlchemy):
 
-    SQLALCHEMY_DATABASE_URI = ConfigSqlAlchemy.SQLALCHEMY_DATABASE_URI \
+    SQLALCHEMY_DATABASE_URI = ConfigSqlAlchemy.DB_AUTH_URI if ConfigSqlAlchemy.DB_AUTH_URI \
+        else ConfigSqlAlchemy.SQLALCHEMY_DATABASE_URI \
         if ConfigSqlAlchemy.SQLALCHEMY_DATABASE_URI is not None else \
         f"postgresql://{Config.DB_USERNAME}:{Config.DB_PASSWORD}" \
         f"@{Config.DB_HOST}:{Config.DB_PORT}/{Config.DB_NAME}"
@@ -263,3 +267,6 @@ class ConfigSqlite(ConfigSqlAlchemy):
 # Syntax sugar: Shared instance of Config class just to get the
 # properties (@property label) from the Flask current_app.
 config = Config()
+
+# Endpoint security options
+endpoint_options = {}

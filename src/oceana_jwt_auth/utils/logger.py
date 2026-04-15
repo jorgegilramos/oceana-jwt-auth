@@ -82,20 +82,20 @@ class AppLogger:
             r.strip().lower() for r in _handlers.strip().split(",")
         ] if len(_handlers) > 0 else []
 
-    def debug(self, message):
-        self.logger.debug(message)
+    def debug(self, message, **kwargs):
+        self.logger.debug(message, **kwargs)
 
-    def info(self, message):
-        self.logger.info(message)
+    def info(self, message, **kwargs):
+        self.logger.info(message, **kwargs)
 
-    def warning(self, message):
-        self.logger.warning(message)
+    def warning(self, message, **kwargs):
+        self.logger.warning(message, **kwargs)
 
-    def error(self, message):
-        self.logger.error(message)
+    def error(self, message, **kwargs):
+        self.logger.error(message, **kwargs)
 
-    def critical(self, message):
-        self.logger.critical(message)
+    def critical(self, message, **kwargs):
+        self.logger.critical(message, **kwargs)
 
 
 logger = AppLogger(OCEANA_API_LOGGING_TITLE)

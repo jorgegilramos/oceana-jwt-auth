@@ -51,18 +51,23 @@ def handle_exceptions(**kwargs) -> Callable:
             except HttpResponseError as e:
                 error_msg = f"Bearer {e.error_description()}"
                 error(f"{error_msg}")
+                error(f"Exception: {e}", exc_info=True)
                 http_code = e.status_code
                 headers = {"WWW-Authenticate": f"{error_msg}"}
                 return response_api_error(http_code=http_code, error=error_msg, headers=headers, endpoint=endpoint_id)
             except Exception as e:
                 error_msg = f"{e}"
+                error(f"{error_msg}")
+                error(f"Exception: {e}", exc_info=True)
                 http_code = int(HTTPStatus.INTERNAL_SERVER_ERROR.value)
                 headers = {"WWW-Authenticate": f"{error_msg}"}
                 return response_api_error(http_code=http_code, error=error_msg, headers=headers, endpoint=endpoint_id)
             except BaseException as e:
                 error_token = "Token validation failed"
                 error_msg = f"Bearer error=\"invalid_token\" error_description=\"{error_token}\""
-                error(f"{error_msg}. Exception: {e}")
+                # error(f"{error_msg}. Exception: {e}")
+                error(f"{error_msg}")
+                error(f"Exception: {e}", exc_info=True)
                 http_code = int(HTTPStatus.UNAUTHORIZED.value)
                 headers = {"WWW-Authenticate": f"{error_msg}"}
                 return response_api_error(http_code=http_code, error=error_msg, headers=headers, endpoint=endpoint_id)
