@@ -2,15 +2,6 @@
 requires = ["setuptools>=78.1.0", "wheel>=0.45.1", "build>=1.2.2"]
 build-backend = "setuptools.build_meta"
 
-[tool.pytest.ini_options]
-env = [
-    "OCEANA_API_PROVIDER=OceanaAPI",
-    # Security properties
-    "OCEANA_API_SECURED=true",
-    # Oceana API Secret key
-    "OCEANA_API_SECRET_KEY=secret_key"
-]
-
 [project]
 name = "oceana_jwt_auth"
 version = "0.0.9"
@@ -68,6 +59,40 @@ package-dir = { "" = "src" }
 [tool.setuptools.packages.find]
 where = ["src"]
 exclude = ["tests*"]
+
+
+#     D:OCEANA_API_PROVIDER=OceanaAPI
+#     # Security properties
+#     OCEANA_API_SECURED=true
+#     # Oceana API Secret key
+#     D:OCEANA_API_SECRET_KEY=secret_key
+
+[tool.pytest_env]
+# Database provider and issuer of JWT tokens
+OCEANA_API_PROVIDER = "OceanaAPI"
+# Security properties
+OCEANA_API_SECURED = true
+# Oceana API Secret key
+OCEANA_API_SECRET_KEY = "secret_key_for_testing_purposes_only"
+
+# # Generate a JWT with valid within 1 hour by now (in minutes)
+# OCEANA_API_TOKEN_MAX_MINUTES=60
+# # Logger Configuration
+# OCEANA_API_LOGGING_LEVEL = "info"
+# OCEANA_API_DEBUG = true
+# OCEANA_API_LOGGING_HANDLERS = "console,file_handler"
+# OCEANA_API_LOGGING_FORMATTER = "%(asctime)s - [%(name)-16s] - %(levelname)-5s - %(message)s"
+# # Create register authentication
+# OCEANA_API_REGISTER_AUTH = true
+
+# [tool.pytest.ini_options]
+# env = [
+#     "OCEANA_API_PROVIDER=OceanaAPI",
+#     # Security properties
+#     "OCEANA_API_SECURED=true",
+#     # Oceana API Secret key
+#     "OCEANA_API_SECRET_KEY=secret_key_for_testing_purposes_only"
+# ]
 
 # [project.optional-dependencies]
 # test = [

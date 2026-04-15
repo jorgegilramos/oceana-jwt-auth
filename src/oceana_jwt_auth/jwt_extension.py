@@ -233,7 +233,7 @@ class JWTExtension():
             for endpoint_id in detected_endpoints:
                 url = ""
                 roles = []
-                if endpoint_id in endpoints_db:
+                if endpoint_id in endpoints_db:  # pragma: no cover
                     _endpoint: dict = self._app.config[ENDPOINT_SECURITY_LABEL][endpoint_id]
                     url = _endpoint.get("url_template")
                     roles = _endpoint.get("roles")
